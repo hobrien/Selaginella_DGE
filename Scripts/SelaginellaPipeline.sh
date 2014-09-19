@@ -1,4 +1,5 @@
 MAXCLUST=30466
+BASEDIR=/Users/HeathOBrien/Bioinformatics
 
 #initialise database with species info
 mysql -u root SelaginellaGenomics < /Users/HeathOBrien/Google\ Drive/Selaginella/DB/selaginellaSQL.txt
@@ -127,7 +128,19 @@ do
   RunCorset.sh
 done
 
-#################################### MAP READS TO NR SEQS AND GET HIT COUNTS ####################################
+#################################### UPLOAD BLAST DATA ####################################
+for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
+do
+  if test $species == 'KRAUS'
+  then
+    grep ^KRUS $BASEDIR/OrthoMCL/goodProteins.bl > $species
+  else
+    grep ^$species $BASEDIR/OrthoMCL/goodProteins.bl > $species
+  fi
+  $BASEDIR/Scripts/AddData.py -f blast -i species
+done
+
+################################ MAP READS TO NR SEQS AND GET HIT COUNTS ##################################
 cd /Users/HeathOBrien/Bioinformatics/Selaginella/Non_redundant
 for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
 do
