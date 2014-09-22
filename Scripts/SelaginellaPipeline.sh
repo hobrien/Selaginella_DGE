@@ -133,11 +133,18 @@ for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
 do
   if test $species == 'KRAUS'
   then
-    grep ^KRUS $BASEDIR/OrthoMCL/goodProteins.bl > $species
+    grep ^KRUS $BASEDIR/OrthoMCL/goodProteins.bl > $BASEDIR/OrthoMCL/$species
   else
-    grep ^$species $BASEDIR/OrthoMCL/goodProteins.bl > $species
+    grep ^$species $BASEDIR/OrthoMCL/goodProteins.bl > $BASEDIR/OrthoMCL/$species
   fi
-  $BASEDIR/Scripts/AddData.py -f blast -i species
+  $BASEDIR/Scripts/AddData.py -f blast -i $BASEDIR/OrthoMCL/${species}.bl
+done
+
+#################################### UPLOAD CORSET DATA ####################################
+for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
+do
+  $BASEDIR/Scripts/AddData.py -f corset_clusters -i $BASEDIR/Corset/${species}clusters.txt
+  $BASEDIR/Scripts/AddData.py -f corset_counts -i $BASEDIR/Corset/${species}counts.txt
 done
 
 ################################ MAP READS TO NR SEQS AND GET HIT COUNTS ##################################

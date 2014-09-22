@@ -62,6 +62,34 @@ def main(argv):
       add_counts(cur, infilename, name)
     if function == 'blast':
       add_blast(cur, infilename)
+    if function == 'corset_clusters':
+      add_corset_clusters(cur, infilename)
+    if function == 'corset_counts':
+      add_corset_counts(cur, infilename, name)
+
+def add_corset_clusters(cur, infilename):
+  with open(infilename, 'rU') as f:
+    reader=csv.reader(f,delimiter='\t')
+    for row in reader:
+      try:
+        (seqID, clusterID) = row
+      except ValueError:
+        continue
+      cur.execute("INSERT INTO CorsetGroups(seqID, clusterID) VALUES(%s, %s", (seqID, clusterID))
+
+def add_corset_counts(cur, infilename, name):
+  with open(infilename, 'rU') as f:
+    reader=csv.reader(f,delimiter='\t')
+    for row in reader:
+      try:
+        (clusterID, leaf1, leaf1b, leaf2, leaf2b, leaf3, leaf3b, leaf4, leaf4b) = row
+        cur.execute("INSERT INTO CorsetCounts(speciesID, clusterID, leaf1, leaf1b, leaf2, leaf2b, leaf3, leaf3b, leaf4, leaf4b) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (name, clusterID, leaf1, leaf1b, leaf2, leaf2b, leaf3, leaf3b, leaf4, leaf4b))
+      except ValueError:  #In the case of MOEL, where there are only 7 columns
+        try:
+          (clusterID, leaf1, leaf1b, leaf2, leaf2b, leaf3, leaf3b) = row
+          cur.execute("INSERT INTO CorsetCounts(speciesID, clusterID, leaf1, leaf1b, leaf2, leaf2b, leaf3, leaf3b) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)", (name, clusterID, leaf1, leaf1b, leaf2, leaf2b, leaf3, leaf3b))
+        except ValueError:
+          continue
 
 def add_blast(cur, infilename):
   with open(infilename, 'rU') as f:
