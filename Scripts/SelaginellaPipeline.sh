@@ -18,6 +18,8 @@ done
 
 AddData.py -f sequences -i /Users/HeathOBrien/Bioinformatics/Selaginella/RefSeq/Selaginella_moellendorffii.v1.0.17.cdna.all.fa
 
+ ######################################### RUN TRANSDECODER #############################################
+ 
 #Add info about coding regions of transcripts to database
 for file in `find /Users/HeathOBrien/Bioinformatics/Selaginella/Transdecoder | grep _Tr.fa.transdecoder.bed`
 do
@@ -28,6 +30,29 @@ AddData.py -f ref_coding #reference sequences are all coding, so we don't need i
 
 #Add orthoMCL info to DB
 AddData.py -f orthologs -i /Users/HeathOBrien/Bioinformatics/Selaginella/OrthoMCL/Selaginella_groups.txt
+
+######################################### RUN ORTHOMCL #############################################
+for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
+do
+  if test $species == 'KRAUS'
+  then
+    cat $BASEDIR/Transdecoder/KRAUS_Tr.fa.transdecoder.pep |perl -pe {'s/.*\|g\.(\d+) .*/>KRUS|$1/'} > $BASEDIR/OrthoMCL/compliantFasta/KRUS.fasta
+  else
+    cat $BASEDIR/Transdecoder/${species}_Tr.fa.transdecoder.pep |perl -pe {'s/.*\|g\.(\d+) .*/>${species}|$1/'} > $BASEDIR/OrthoMCL/compliantFasta/${species}.fasta
+  fi
+done
+orthomclFilterFasta $BASEDIR/OrthoMCL/compliantFasta/ 10 20
+makeblastdb -in $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta -dbtype prot
+blastp -query $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta -db $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta -outfmt 6 -out $BASEDIR/OrthoMCL/goodProteins.bl -num_threads 6
+orthmclInstallSchema -orthomcl
+orthomclBlastParser $BASEDIR/OrthoMCL/goodProteins.bl $BASEDIR/OrthoMCL/compliantFasta >> $BASEDIR/OrthoMCL/similarSequences.txt
+orthomclLoadBlast $BASEDIR/OrthoMCL/similarSequences.txt
+orthomclPairs
+orthomclDumpPairsFiles
+mcl $BASEDIR/OrthoMCL/mclInput --abc -I 1.2 -o $BASEDIR/OrthoMCL/MCL/out.data.mci.I12
+orthomclMclToGroups OG2_ 0 < $BASEDIR/OrthoMCL/MCL/out.data.mci.I12 >$BASEDIR/OrthoMCL/Selaginella_groups.txt
+mv $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta 
+$BASEDIR/Scripts/AddData.py -f orthologs -i $BASEDIR/OrthoMCL/Selaginella_groups.txt
 
 ######################################### RUN PHYLOTREE PRUNER #############################################
 mkdir /Users/HeathOBrien/Bioinformatics/Selaginella/Clusters
