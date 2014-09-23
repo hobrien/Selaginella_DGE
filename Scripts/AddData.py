@@ -63,11 +63,11 @@ def main(argv):
     if function == 'blast':
       add_blast(cur, infilename)
     if function == 'corset_clusters':
-      add_corset_clusters(cur, infilename)
+      add_corset_clusters(cur, infilename, name)
     if function == 'corset_counts':
       add_corset_counts(cur, infilename, name)
 
-def add_corset_clusters(cur, infilename):
+def add_corset_clusters(cur, infilename, name):
   with open(infilename, 'rU') as f:
     reader=csv.reader(f,delimiter='\t')
     for row in reader:
@@ -75,7 +75,7 @@ def add_corset_clusters(cur, infilename):
         (seqID, clusterID) = row
       except ValueError:
         continue
-      cur.execute("INSERT INTO CorsetGroups(seqID, clusterID) VALUES(%s, %s", (seqID, clusterID))
+      cur.execute("INSERT INTO CorsetGroups(speciesID, seqID, clusterID) VALUES(%s, %s, %s)", (name, seqID, clusterID))
 
 def add_corset_counts(cur, infilename, name):
   with open(infilename, 'rU') as f:

@@ -168,8 +168,8 @@ done
 #################################### UPLOAD CORSET DATA ####################################
 for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
 do
-  $BASEDIR/Scripts/AddData.py -f corset_clusters -i $BASEDIR/Corset/${species}clusters.txt
-  $BASEDIR/Scripts/AddData.py -f corset_counts -i $BASEDIR/Corset/${species}counts.txt
+  $BASEDIR/Scripts/AddData.py -f corset_clusters -n $species -i $BASEDIR/Corset/${species}clusters.txt
+  $BASEDIR/Scripts/AddData.py -f corset_counts -n $specie -i $BASEDIR/Corset/${species}counts.txt
 done
 
 ################################ MAP READS TO NR SEQS AND GET HIT COUNTS ##################################
