@@ -6,7 +6,7 @@ from os import path
 from Heathpy import flatten_GTF
 from Bio.Seq import Seq
 from Bio.Alphabet import IUPAC
-
+from Bio import SeqIO
 
 def main(argv):
   infilename = ''
@@ -59,6 +59,8 @@ def main(argv):
       get_nr(cur, species)    
     elif function == 'counts':
       get_counts(cur, species)    
+    elif function == 'corset':
+      corset_nr(cur, species, infilename, outfilename)    
 
 def get_counts(cur, species):
   if species == 'all':
@@ -161,7 +163,7 @@ def seq_clusters(cur, cluster, outfilename):
         outfile.write(str(seq[start:end].reverse_complement()) + '\n')
         #print seq[start:end].reverse_complement()
 
-def nr_clusters(cur, cluster, outfilename):
+def nr_clusters(cur, cluster, infilename, outfilename):
   cur.execute("SELECT geneID FROM OrthoGroups WHERE orthoID = %s AND non_redundant = 1 AND (geneID LIKE 'KRAUS%%' OR geneID LIKE 'MOEL%%' OR geneID LIKE 'UNC%%' OR geneID LIKE 'WILD%%')", cluster)
   if len(cur.fetchall()) > 0:
     if outfilename:
@@ -181,6 +183,13 @@ def nr_clusters(cur, cluster, outfilename):
       else:
         outfile.write(str(seq[start:end].reverse_complement()) + '\n')
         #print seq[start:end].reverse_complement()
+
+def corset_nr(cur, species, outfilename):
+  seq_dict = SeqIO.index(infilename, "fasta")
+  cur.execute("SELECT geneID FROM OrthoGroups WHERE orthoID = %s AND non_redundant = 1 AND (geneID LIKE 'KRAUS%%' OR geneID LIKE 'MOEL%%' OR geneID LIKE 'UNC%%' OR geneID LIKE 'WILD%%')", cluster)
+  for (geneID, cluster_size) in cur.fetchall():
+    seq = seq_dict[geneID]
+    outfile.write(">%s\n%s\n" % (seq.id, seq.seq))
 
 if __name__ == "__main__":
    main(sys.argv[1:])
