@@ -60,7 +60,7 @@ def main(argv):
     elif function == 'counts':
       get_counts(cur, species)    
     elif function == 'corset':
-      corset_nr(cur, species, infilename, outfilename)    
+      corset_nr(cur, species, infilename)    
 
 def get_counts(cur, species):
   if species == 'all':
@@ -184,12 +184,13 @@ def nr_clusters(cur, cluster, infilename, outfilename):
         outfile.write(str(seq[start:end].reverse_complement()) + '\n')
         #print seq[start:end].reverse_complement()
 
-def corset_nr(cur, species, outfilename):
+def corset_nr(cur, speciesID, infilename):
   seq_dict = SeqIO.index(infilename, "fasta")
-  cur.execute("SELECT geneID FROM OrthoGroups WHERE orthoID = %s AND non_redundant = 1 AND (geneID LIKE 'KRAUS%%' OR geneID LIKE 'MOEL%%' OR geneID LIKE 'UNC%%' OR geneID LIKE 'WILD%%')", cluster)
-  for (geneID, cluster_size) in cur.fetchall():
-    seq = seq_dict[geneID]
-    outfile.write(">%s\n%s\n" % (seq.id, seq.seq))
+  print "SELECT CodingSequences.geneID FROM CorsetGroups, CodingSequences WHERE CorsetGroups.seqID = CodingSequences.seqID AND CorsetGroups.non_redundant = 1 AND CorsetGroups.speciesID = %s" % speciesID
+  cur.execute("SELECT CodingSequences.geneID FROM CorsetGroups, CodingSequences WHERE CorsetGroups.seqID = CodingSequences.seqID AND CorsetGroups.non_redundant = 1 AND CorsetGroups.speciesID = %s", speciesID)
+  for row in cur.fetchall():
+    seq = seq_dict[row[0]]
+    print ">%s\n%s" % (seq.id, seq.seq)
 
 if __name__ == "__main__":
    main(sys.argv[1:])

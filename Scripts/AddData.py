@@ -40,8 +40,6 @@ def main(argv):
         
   if function == 'ref_coding':
     infilename = 1  #don't need a infile for this function. This prevents an error in the following lines
-  if (not infilename and not seqfilename) or not function:
-     sys.exit(usage)
   con = mdb.connect('localhost', 'root', '', database);
   with con:
     cur = con.cursor()
@@ -66,6 +64,20 @@ def main(argv):
       add_corset_clusters(cur, infilename, name)
     if function == 'corset_counts':
       add_corset_counts(cur, infilename, name)
+    if function == 'corset_nr':
+      corset_nr(cur, name)
+
+def corset_nr(cur, speciesID):
+    print "SELECT CorsetGroups.seqID, Max(Blast.hitlen) FROM Blast, CorsetGroups, CodingSequences WHERE CorsetGroups.seqID = CodingSequences.seqID AND CodingSequences.geneID = Blast.qseqid AND Blast.qseqid != Blast.sseqid AND CorsetGroups.speciesID = %s GROUP BY CorsetGroups.clusterID" % speciesID
+    cur.execute("SELECT CorsetGroups.seqID, Max(Blast.hitlen) FROM Blast, CorsetGroups, CodingSequences WHERE CorsetGroups.seqID = CodingSequences.seqID AND CodingSequences.geneID = Blast.qseqid AND Blast.qseqid != Blast.sseqid AND CorsetGroups.speciesID = %s GROUP BY CorsetGroups.clusterID", speciesID)
+    for (seqID, cluster_size) in cur.fetchall():
+      try:
+        print seqID, cluster_size
+        cur.execute('UPDATE CorsetGroups SET non_redundant = 1 WHERE seqID =  %s' , (seqID))
+      except mdb.IntegrityError, e:
+        #warnings.warn("%s" % e)
+        pass
+
 
 def add_corset_clusters(cur, infilename, name):
   with open(infilename, 'rU') as f:

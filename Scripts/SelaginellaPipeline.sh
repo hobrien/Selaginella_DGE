@@ -23,7 +23,7 @@ AddData.py -f sequences -i /Users/HeathOBrien/Bioinformatics/Selaginella/RefSeq/
 #rename amino acid sequences 
 for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
 do
-  cat $BASEDIR/Transdecoder/${species}_Tr.fa.transdecoder.pep |perl -pe {'s/.*\|g\.(\d+) .*/>${species}_$1/'} > $BASEDIR/Transdecoder/${species}_aa.fa
+  cat $BASEDIR/Transdecoder/${species}_Tr.fa.transdecoder.pep |perl -pe {'s/.*\|g\.(\d+) .*/>${species}_$1/'} > $BASEDIR/AA_seqs/${species}_aa.fa
 done
 
 #Add info about coding regions of transcripts to database
@@ -32,10 +32,34 @@ do
 	AddData.py -f coding -i $file
 done
 
+
 AddData.py -f ref_coding #reference sequences are all coding, so we don't need info from BED file
 
 #Add orthoMCL info to DB
 AddData.py -f orthologs -i /Users/HeathOBrien/Bioinformatics/Selaginella/OrthoMCL/Selaginella_groups.txt
+
+#################################### DO ALL-BY ALL BLAST AND UPLOAD RESULTS ####################################
+#Copy reference aa tranlsations sequences AA_seqs
+for file in `find $BASEDIR/RefSeq -name *_aa.fa`
+do
+  cp $file $BASEDIR/AA_seqs/$file
+done
+
+orthomclFilterFasta $BASEDIR/OrthoMCL/compliantFasta/ 10 20
+makeblastdb -in $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta -dbtype prot
+blastp -query $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta -db $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta -outfmt 6 -out $BASEDIR/OrthoMCL/goodProteins.bl -num_threads 6
+
+for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
+do
+  if test $species == 'KRAUS'
+  then
+    grep ^KRUS $BASEDIR/OrthoMCL/goodProteins.bl > $BASEDIR/OrthoMCL/$species
+  else
+    grep ^$species $BASEDIR/OrthoMCL/goodProteins.bl > $BASEDIR/OrthoMCL/$species
+  fi
+  $BASEDIR/Scripts/AddData.py -f blast -i $BASEDIR/OrthoMCL/${species}.bl
+done
+
 
 ######################################### RUN PHYLOTREE PRUNER #############################################
 mkdir /Users/HeathOBrien/Bioinformatics/Selaginella/Clusters
@@ -136,27 +160,24 @@ do
   RunCorset.sh
 done
 
-#################################### UPLOAD BLAST DATA ####################################
-for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
-do
-  if test $species == 'KRAUS'
-  then
-    grep ^KRUS $BASEDIR/OrthoMCL/goodProteins.bl > $BASEDIR/OrthoMCL/$species
-  else
-    grep ^$species $BASEDIR/OrthoMCL/goodProteins.bl > $BASEDIR/OrthoMCL/$species
-  fi
-  $BASEDIR/Scripts/AddData.py -f blast -i $BASEDIR/OrthoMCL/${species}.bl
-done
-
 ######################## UPLOAD CORSET DATA AND WRITE REPRESENTATIVE SEQS TO FILE ##################
 for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
 do
   $BASEDIR/Scripts/AddData.py -f corset_clusters -n $species -i $BASEDIR/Corset/${species}clusters.txt
   $BASEDIR/Scripts/AddData.py -f corset_counts -n $specie -i $BASEDIR/Corset/${species}counts.txt
-  $BASEDIR/Scripts/AddData.py -f corset -s $species -i $BASEDIR/Transdecoder/${species}_aa.fa -o $BASEDIR/OrthoMCL/compliantFasta/${species}.fa
+  $BASEDIR/Scripts/AddData.py -f corset_nr -s $species
+  $BASEDIR/Scripts/GetData.py -f corset -s $species -i $BASEDIR/AA_seqs/${species}_aa.fa | perl -pe 's/KRAUS/KRUS/' | perl -pe 's/_/|/' > $BASEDIR/OrthoMCL/compliantFasta/${species}.fa
 done
 
 ######################################### RUN ORTHOMCL #############################################
+for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
+do
+  $BASEDIR/Scripts/GetData.py -f corset -s $species -i $BASEDIR/Transdecoder/${species}_aa.fa -o $BASEDIR/OrthoMCL/compliantFasta/${species}.fa
+  if test $species == 'KRAUS'
+  then
+    perl -pi -e 's/^>KRAUS/>KRUS/' $BASEDIR/OrthoMCL/compliantFasta/${species}.fa
+  fi
+    
 for file in `ls $BASEDIR/OrthoMCL/compliantFasta/`
 do
   perl -pi -e 's/_/|/' $BASEDIR/OrthoMCL/compliantFasta/$file
