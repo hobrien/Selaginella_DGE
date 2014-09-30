@@ -1,5 +1,5 @@
 MAXCLUST=30466
-BASEDIR=/Users/HeathOBrien/Bioinformatics
+BASEDIR=/Users/HeathOBrien/Bioinformatics/Selaginella_DGE
 
 #initialise database with species info
 mysql -u root SelaginellaGenomics < /Users/HeathOBrien/Google\ Drive/Selaginella/DB/selaginellaSQL.txt
@@ -23,7 +23,7 @@ AddData.py -f sequences -i /Users/HeathOBrien/Bioinformatics/Selaginella/RefSeq/
 #rename amino acid sequences 
 for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
 do
-  cat $BASEDIR/Transdecoder/${species}_Tr.fa.transdecoder.pep |perl -pe {'s/.*\|g\.(\d+) .*/>${species}_$1/'} > $BASEDIR/AA_seqs/${species}_aa.fa
+  cat $BASEDIR/Transdecoder/${species}_Tr.fa.transdecoder.pep | perl -pe 'BEGIN {$species=shift} s/.*\|g\.(\d+) .*/>${species}_$1/' $species  > $BASEDIR/AA_seqs/${species}_aa.fa
 done
 
 #Add info about coding regions of transcripts to database
@@ -166,7 +166,12 @@ do
   $BASEDIR/Scripts/AddData.py -f corset_clusters -n $species -i $BASEDIR/Corset/${species}clusters.txt
   $BASEDIR/Scripts/AddData.py -f corset_counts -n $specie -i $BASEDIR/Corset/${species}counts.txt
   $BASEDIR/Scripts/AddData.py -f corset_nr -s $species
-  $BASEDIR/Scripts/GetData.py -f corset -s $species -i $BASEDIR/AA_seqs/${species}_aa.fa | perl -pe 's/KRAUS/KRUS/' | perl -pe 's/_/|/' > $BASEDIR/OrthoMCL/compliantFasta/${species}.fa
+  if test $species == 'KRAUS'
+  then
+    $BASEDIR/Scripts/GetData.py -f corset -s $species -i $BASEDIR/AA_seqs/${species}_aa.fa | perl -pe 's/KRAUS/KRUS/' | perl -pe 's/_/|/' > $BASEDIR/OrthoMCL/compliantFasta/KRUS.fasta
+  else
+    $BASEDIR/Scripts/GetData.py -f corset -s $species -i $BASEDIR/AA_seqs/${species}_aa.fa | perl -pe 's/_/|/' > $BASEDIR/OrthoMCL/compliantFasta/$species.fasta
+  fi
 done
 
 ######################################### RUN ORTHOMCL #############################################

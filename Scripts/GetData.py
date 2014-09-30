@@ -186,7 +186,6 @@ def nr_clusters(cur, cluster, infilename, outfilename):
 
 def corset_nr(cur, speciesID, infilename):
   seq_dict = SeqIO.index(infilename, "fasta")
-  print "SELECT CodingSequences.geneID FROM CorsetGroups, CodingSequences WHERE CorsetGroups.seqID = CodingSequences.seqID AND CorsetGroups.non_redundant = 1 AND CorsetGroups.speciesID = %s" % speciesID
   cur.execute("SELECT CodingSequences.geneID FROM CorsetGroups, CodingSequences WHERE CorsetGroups.seqID = CodingSequences.seqID AND CorsetGroups.non_redundant = 1 AND CorsetGroups.speciesID = %s", speciesID)
   for row in cur.fetchall():
     seq = seq_dict[row[0]]
