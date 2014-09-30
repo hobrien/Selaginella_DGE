@@ -23,7 +23,7 @@ AddData.py -f sequences -i /Users/HeathOBrien/Bioinformatics/Selaginella/RefSeq/
 #rename amino acid sequences 
 for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
 do
-  cat $BASEDIR/Transdecoder/${species}_Tr.fa.transdecoder.pep | perl -pe 'BEGIN {$species=shift} s/.*\|g\.(\d+) .*/>${species}_$1/' $species  > $BASEDIR/AA_seqs/${species}_aa.fa
+  cat $BASEDIR/Transdecoder/${species}_Tr.fa.transdecoder.pep | perl -pe 'BEGIN {$species=shift} s/.*\|g\.(\d+) .*/>${species}|$1/' $species  > $BASEDIR/AA_seqs/${species}.fasta
 done
 
 #Add info about coding regions of transcripts to database
