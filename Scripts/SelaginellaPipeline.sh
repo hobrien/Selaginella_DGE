@@ -42,7 +42,10 @@ AddData.py -f orthologs -i /Users/HeathOBrien/Bioinformatics/Selaginella/OrthoMC
 #Copy reference aa tranlsations sequences AA_seqs
 for file in `find $BASEDIR/RefSeq -name *_aa.fa`
 do
-  cp $file $BASEDIR/AA_seqs/$file
+  if ! test $file == $BASEDIR/RefSeq/Selmo_all_aa.fa
+  then
+    cat $file | perl -pe 's/scaffold-(\w{4})-(\d+).*/$1|$2/' >$BASEDIR/AA_seqs/$(basename $file | cut -d_ -f1).fasta
+  fi
 done
 
 orthomclFilterFasta $BASEDIR/OrthoMCL/compliantFasta/ 10 20
