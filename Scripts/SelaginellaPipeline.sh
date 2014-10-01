@@ -85,7 +85,8 @@ done
 ######################################### RUN ORTHOMCL #############################################
 orthomclFilterFasta $BASEDIR/OrthoMCL/compliantFasta/ 10 20
 $BASEDIR/Scripts/FilterBlast.py -i $BASEDIR/Blast/Selmo_all.bl > $BASEDIR/OrthoMCL/goodProteins.bl
-orthmclInstallSchema -orthomcl
+mysql -u root orthomcl < $BASEDIR/Scripts/InitializeDB.sql
+orthomclInstallSchema $BASEDIR/OrthoMCL/orthomcl.config.template
 orthomclBlastParser $BASEDIR/OrthoMCL/goodProteins.bl $BASEDIR/OrthoMCL/compliantFasta >> $BASEDIR/OrthoMCL/similarSequences.txt
 orthomclLoadBlast $BASEDIR/OrthoMCL/similarSequences.txt
 orthomclPairs
