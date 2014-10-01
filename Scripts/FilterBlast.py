@@ -42,7 +42,11 @@ def main(argv):
           if seqid.split('|')[0] in ('KRAUS', 'MOEL', 'UNC', 'WILD'):
             cur.execute("SELECT CorsetGroups.non_redundant FROM CorsetGroups, CodingSequences WHERE CorsetGroups.seqID = CodingSequences.seqID AND CodingSequences.geneID = %s", seqid.replace('|', '_'))
             non_redundant = cur.fetchone()
-            if not non_redundant[0] == '1':
+            try:
+              if not non_redundant[0] == '1':
+                skip_row = 1
+            except TypeError:
+              warnings.warn("no DB entry for %s" % '\t'.join(row))
               skip_row = 1
         if not skip_row:
           print '\t'.join(row)
