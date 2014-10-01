@@ -60,10 +60,12 @@ do
 done
 
 #################################### MULTIMAP READS AND RUN CORSET ####################################
+
+#These steps where actually run on BlueCrystal
 for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
 do
-  multimap.sh
-  RunCorset.sh
+  bash $BASEDIR/Scripts/multimap.sh
+  bash $BASEDIR/Scripts/RunCorset.sh
 done
 
 ######################## UPLOAD CORSET DATA AND WRITE REPRESENTATIVE SEQS TO FILE ##################
@@ -196,7 +198,7 @@ done
 CompareSets.pl UNC MOEL KRAUS WILD
 mv VennPlot.pdf ~/Google\ Drive/Selaginella/Figures/OrthoVenn.pdf
   
-bash ~/Bioinformatics/Selaginella/Shell_scripts/unimap.sh KRAUS MOEL UNC WILD
+bash ~/Bioinformatics/Selaginella/Shell_scripts/unimap.sh KRAUS MOEL UNC WILD #this step was run on BlueCrystal
 bash ~/Bioinformatics/Selaginella/Shell_scripts/get_counts.sh KRAUS MOEL UNC WILD
 GetData -f counts >${Counts}/Selaginella_all.txt
 GetData.py -f counts >${Counts}/selag_counts.txt
