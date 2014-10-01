@@ -48,20 +48,50 @@ do
   fi
 done
 
-orthomclFilterFasta $BASEDIR/OrthoMCL/compliantFasta/ 10 20
-makeblastdb -in $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta -dbtype prot
-blastp -query $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta -db $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta -outfmt 6 -out $BASEDIR/OrthoMCL/goodProteins.bl -num_threads 6
+cat $BASEDIR/AA_seqs/* >> $BASEDIR/AA_seqs/Selmo_all.fa
+makeblastdb -in $BASEDIR/AA_seqs/Selmo_all.fa -dbtype prot -out $BASEDIR/Blast/Selmo_all.fa
+blastp -query $BASEDIR/AA_seqs/Selmo_all.fa -db $BASEDIR/Blast/Selmo_all.fa -outfmt 6 -out $BASEDIR/Blast/Selmo_all.fa -num_threads 6
 
 for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
 do
+  grep ^$species $BASEDIR/Blast/Selmo_all.bl > $BASEDIR/Blast/$species.bl
+  $BASEDIR/Scripts/AddData.py -f blast -i $BASEDIR/Blast/$species.bl
+  rm $BASEDIR/Blast/$species.bl
+done
+
+#################################### MULTIMAP READS AND RUN CORSET ####################################
+for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
+do
+  multimap.sh
+  RunCorset.sh
+done
+
+######################## UPLOAD CORSET DATA AND WRITE REPRESENTATIVE SEQS TO FILE ##################
+for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
+do
+  $BASEDIR/Scripts/AddData.py -f corset_clusters -n $species -i $BASEDIR/Corset/${species}clusters.txt
+  $BASEDIR/Scripts/AddData.py -f corset_counts -n $specie -i $BASEDIR/Corset/${species}counts.txt
+  $BASEDIR/Scripts/AddData.py -f corset_nr -s $species
   if test $species == 'KRAUS'
   then
-    grep ^KRUS $BASEDIR/OrthoMCL/goodProteins.bl > $BASEDIR/OrthoMCL/$species
+    $BASEDIR/Scripts/GetData.py -f corset -s $species -i $BASEDIR/AA_seqs/${species}_aa.fa | perl -pe 's/KRAUS/KRUS/' | perl -pe 's/_/|/' > $BASEDIR/OrthoMCL/compliantFasta/KRUS.fasta
   else
-    grep ^$species $BASEDIR/OrthoMCL/goodProteins.bl > $BASEDIR/OrthoMCL/$species
+    $BASEDIR/Scripts/GetData.py -f corset -s $species -i $BASEDIR/AA_seqs/${species}_aa.fa | perl -pe 's/_/|/' > $BASEDIR/OrthoMCL/compliantFasta/$species.fasta
   fi
-  $BASEDIR/Scripts/AddData.py -f blast -i $BASEDIR/OrthoMCL/${species}.bl
 done
+
+######################################### RUN ORTHOMCL #############################################
+orthomclFilterFasta $BASEDIR/OrthoMCL/compliantFasta/ 10 20
+$BASEDIR/Scripts/FilterBlast.py -i $BASEDIR/Blast/Selmo_all.bl > $BASEDIR/OrthoMCL/goodProteins.bl
+orthmclInstallSchema -orthomcl
+orthomclBlastParser $BASEDIR/OrthoMCL/goodProteins.bl $BASEDIR/OrthoMCL/compliantFasta >> $BASEDIR/OrthoMCL/similarSequences.txt
+orthomclLoadBlast $BASEDIR/OrthoMCL/similarSequences.txt
+orthomclPairs
+orthomclDumpPairsFiles
+mcl $BASEDIR/OrthoMCL/mclInput --abc -I 1.2 -o $BASEDIR/OrthoMCL/MCL/out.data.mci.I12
+orthomclMclToGroups OG2_ 0 < $BASEDIR/OrthoMCL/MCL/out.data.mci.I12 >$BASEDIR/OrthoMCL/Selaginella_groups.txt
+mv $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta 
+$BASEDIR/Scripts/AddData.py -f orthologs -i $BASEDIR/OrthoMCL/Selaginella_groups.txt
 
 
 ######################################### RUN PHYLOTREE PRUNER #############################################
@@ -155,53 +185,6 @@ do
 done
 
 Rscript ~/Documents/R/GeneticDistances.R
-
-#################################### MULTIMAP READS AND RUN CORSET ####################################
-for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
-do
-  multimap.sh
-  RunCorset.sh
-done
-
-######################## UPLOAD CORSET DATA AND WRITE REPRESENTATIVE SEQS TO FILE ##################
-for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
-do
-  $BASEDIR/Scripts/AddData.py -f corset_clusters -n $species -i $BASEDIR/Corset/${species}clusters.txt
-  $BASEDIR/Scripts/AddData.py -f corset_counts -n $specie -i $BASEDIR/Corset/${species}counts.txt
-  $BASEDIR/Scripts/AddData.py -f corset_nr -s $species
-  if test $species == 'KRAUS'
-  then
-    $BASEDIR/Scripts/GetData.py -f corset -s $species -i $BASEDIR/AA_seqs/${species}_aa.fa | perl -pe 's/KRAUS/KRUS/' | perl -pe 's/_/|/' > $BASEDIR/OrthoMCL/compliantFasta/KRUS.fasta
-  else
-    $BASEDIR/Scripts/GetData.py -f corset -s $species -i $BASEDIR/AA_seqs/${species}_aa.fa | perl -pe 's/_/|/' > $BASEDIR/OrthoMCL/compliantFasta/$species.fasta
-  fi
-done
-
-######################################### RUN ORTHOMCL #############################################
-for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
-do
-  $BASEDIR/Scripts/GetData.py -f corset -s $species -i $BASEDIR/Transdecoder/${species}_aa.fa -o $BASEDIR/OrthoMCL/compliantFasta/${species}.fa
-  if test $species == 'KRAUS'
-  then
-    perl -pi -e 's/^>KRAUS/>KRUS/' $BASEDIR/OrthoMCL/compliantFasta/${species}.fa
-  fi
-    
-for file in `ls $BASEDIR/OrthoMCL/compliantFasta/`
-do
-  perl -pi -e 's/_/|/' $BASEDIR/OrthoMCL/compliantFasta/$file
-done
-orthomclFilterFasta $BASEDIR/OrthoMCL/compliantFasta/ 10 20
-makeblastdb -in $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta -dbtype prot
-blastp -query $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta -db $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta -outfmt 6 -out $BASEDIR/OrthoMCL/goodProteins.bl -num_threads 6
-orthmclInstallSchema -orthomcl
-orthomclBlastParser $BASEDIR/OrthoMCL/goodProteins.bl $BASEDIR/OrthoMCL/compliantFasta >> $BASEDIR/OrthoMCL/similarSequences.txt
-orthomclLoadBlast $BASEDIR/OrthoMCL/similarSequences.txt
-orthomclPairs
-orthomclDumpPairsFiles
-mcl $BASEDIR/OrthoMCL/mclInput --abc -I 1.2 -o $BASEDIR/OrthoMCL/MCL/out.data.mci.I12
-orthomclMclToGroups OG2_ 0 < $BASEDIR/OrthoMCL/MCL/out.data.mci.I12 >$BASEDIR/OrthoMCL/Selaginella_groups.txt
-mv $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta 
-$BASEDIR/Scripts/AddData.py -f orthologs -i $BASEDIR/OrthoMCL/Selaginella_groups.txt
 
 ################################ MAP READS TO NR SEQS AND GET HIT COUNTS ##################################
 cd /Users/HeathOBrien/Bioinformatics/Selaginella/Non_redundant
