@@ -1,8 +1,13 @@
 #!/usr/local/bin/python
 
 """
-A number of functions to add data to Selaginella database from csv files or from sequence
-files"""
+Filter redundant sequences from blast results (query and subject)
+
+
+This works fine, but I think it would be a lot faster if I made a dictionary with all 
+non-redundant seqIDs as keys, then do the lookups in memory rather than querying the DB
+over and over and over
+"""
 
 
 import sys, getopt, csv, warnings, re
