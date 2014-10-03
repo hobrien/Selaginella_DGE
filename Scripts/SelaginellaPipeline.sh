@@ -83,14 +83,16 @@ do
 done
 
 ######################################### RUN ORTHOMCL #############################################
-orthomclFilterFasta $BASEDIR/OrthoMCL/compliantFasta/ 10 20
+cd $BASEDIR/OrthoMCL/
+orthomclFilterFasta $BASEDIR/OrthoMCL/compliantFasta/ 10 20 #I'm not sure if this file is actually needed for anything
 $BASEDIR/Scripts/FilterBlast.py -i $BASEDIR/Blast/Selmo_all.bl > $BASEDIR/OrthoMCL/goodProteins.bl
 mysql -u root orthomcl < $BASEDIR/Scripts/InitializeDB.sql
 orthomclInstallSchema $BASEDIR/OrthoMCL/orthomcl.config.template
-orthomclBlastParser $BASEDIR/OrthoMCL/goodProteins.bl $BASEDIR/OrthoMCL/compliantFasta >> $BASEDIR/OrthoMCL/similarSequences.txt
-orthomclLoadBlast $BASEDIR/OrthoMCL/similarSequences.txt
-orthomclPairs
-orthomclDumpPairsFiles
+orthomclBlastParser $BASEDIR/OrthoMCL/goodProteins.bl $BASEDIR/OrthoMCL/compliantFasta > $BASEDIR/OrthoMCL/similarSequences.txt
+orthomclLoadBlast $BASEDIR/OrthoMCL/orthomcl.config.template $BASEDIR/OrthoMCL/similarSequences.txt
+orthomclPairs $BASEDIR/OrthoMCL/orthomcl.config.template $BASEDIR/OrthoMCL/orthomclPair.log cleanup=yes
+rm -r $BASEDIR/OrthoMCL/pairs
+orthomclDumpPairsFiles orthomcl.config.template
 mcl $BASEDIR/OrthoMCL/mclInput --abc -I 1.2 -o $BASEDIR/OrthoMCL/MCL/out.data.mci.I12
 orthomclMclToGroups OG2_ 0 < $BASEDIR/OrthoMCL/MCL/out.data.mci.I12 >$BASEDIR/OrthoMCL/Selaginella_groups.txt
 mv $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta 
