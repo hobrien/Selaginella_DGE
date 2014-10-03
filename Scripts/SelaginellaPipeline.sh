@@ -82,6 +82,21 @@ do
   fi
 done
 
+################### PLOT LENGTH DIST AND OVERLAP OF NON-REDUNDANT CONTIGS ################
+BASEDIR=/Users/HeathOBrien/Bioinformatics/Selaginella_DGE
+if test -f $BASEDIR/Results/coding_lengths.txt
+then
+  rm $BASEDIR/Results/coding_lengths.txt
+fi
+
+for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
+do
+  $BASEDIR/Scripts/GetData.py -f lengths -s $species >> $BASEDIR/Results/coding_lengths.txt
+done
+echo "coding_lengths.txt: lengths of coding portion of each non-redundant contig" >> $BASEDIR/Results/README.md
+Rscript $BASEDIR/Scripts/PlotLengths.R $BASEDIR/Results/coding_lengths.txt $BASEDIR/Figures/coding_lengths.png
+echo "coding_lengths.png: histograms of lengths of coding portions for non-redundant contig" >> $BASEDIR/Figures/README.md
+
 ######################################### RUN ORTHOMCL #############################################
 cd $BASEDIR/OrthoMCL/
 orthomclFilterFasta $BASEDIR/OrthoMCL/compliantFasta/ 10 20 #I'm not sure if this file is actually needed for anything
@@ -95,9 +110,8 @@ rm -r $BASEDIR/OrthoMCL/pairs
 orthomclDumpPairsFiles orthomcl.config.template
 mcl $BASEDIR/OrthoMCL/mclInput --abc -I 1.2 -o $BASEDIR/OrthoMCL/MCL/out.data.mci.I12
 orthomclMclToGroups OG2_ 0 < $BASEDIR/OrthoMCL/MCL/out.data.mci.I12 >$BASEDIR/OrthoMCL/Selaginella_groups.txt
-mv $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta $BASEDIR/OrthoMCL/compliantFasta/goodProteins.fasta 
+mysql -u root SelaginellaGenomics < $BASEDIR/Scripts/DeleteOrthologs.sql
 $BASEDIR/Scripts/AddData.py -f orthologs -i $BASEDIR/OrthoMCL/Selaginella_groups.txt
-
 
 ######################################### RUN PHYLOTREE PRUNER #############################################
 mkdir /Users/HeathOBrien/Bioinformatics/Selaginella/Clusters
