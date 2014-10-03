@@ -61,6 +61,15 @@ def main(argv):
       get_counts(cur, species)    
     elif function == 'corset':
       corset_nr(cur, species, infilename)    
+    elif function == 'lengths':
+      get_lengths(cur, species)    
+
+
+def get_lengths(cur, species):
+  #print "SELECT CodingSequences.start_pos, CodingSequences.end_pos FROM CodingSequences, CorsetGroups WHERE CorsetGroups.seqID = CodingSequences.seqID AND CorsetGroups.non_redundant = 1 AND CorsetGroups.seqID LIKE '%s'" % species + '%'
+  cur.execute("SELECT CodingSequences.geneID, CodingSequences.start_pos, CodingSequences.end_pos FROM CodingSequences, CorsetGroups WHERE CorsetGroups.seqID = CodingSequences.seqID AND CorsetGroups.non_redundant = 1 AND CorsetGroups.seqID LIKE %s", species + '%')
+  for row in cur.fetchall():
+    print '\t'.join((species, row[0], str(row[2] - row[1] + 1)))
 
 def get_counts(cur, species):
   if species == 'all':
