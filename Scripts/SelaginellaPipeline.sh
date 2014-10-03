@@ -113,6 +113,20 @@ orthomclMclToGroups OG2_ 0 < $BASEDIR/OrthoMCL/MCL/out.data.mci.I12 >$BASEDIR/Or
 mysql -u root SelaginellaGenomics < $BASEDIR/Scripts/DeleteOrthologs.sql
 $BASEDIR/Scripts/AddData.py -f orthologs -i $BASEDIR/OrthoMCL/Selaginella_groups.txt
 
+############################# MAKE VENN DIAGRAM OF ORTHOLOG OVERLAPS ###############################
+for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
+do
+  $BASEDIR/Scripts/GetData.py -f clusters -s $species > $BASEDIR/Results/OrthoGroups/$species.txt
+done
+echo "OrthoGroups: lists of ortholog groups for each species" >> $BASEDIR/Results/README.md
+cd $BASEDIR/Figures
+$BASEDIR/Scripts/CompareSets.pl $BASEDIR/Results/OrthoGroups/UNC.txt \
+                                $BASEDIR/Results/OrthoGroups/MOEL.txt \
+                                $BASEDIR/Results/OrthoGroups/KRAUS.txt \
+                                $BASEDIR/Results/OrthoGroups/WILD.txt 
+mv VennPlot.png $BASEDIR/Figures/ortholog_overlap.png
+echo "ortholog_overlap.png: venn diagram of ortholog group overlaps" >> $BASEDIR/Figures/README.md
+
 ######################################### RUN PHYLOTREE PRUNER #############################################
 mkdir /Users/HeathOBrien/Bioinformatics/Selaginella/Clusters
 cd /Users/HeathOBrien/Bioinformatics/Selaginella/Clusters

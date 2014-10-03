@@ -110,7 +110,7 @@ def get_locus(cur, locus):
     print ">" + accessionID + "\n" + sequence
 
 def get_clusters(cur, species):
-  cur.execute("SELECT DISTINCT orthoID FROM OrthoGroups, CodingSequences, Sequences WHERE Orthogroups.geneID = CodingSequences.geneID AND CodingSequences.seqID = Sequences.seqID AND Sequences.species = %s", (species))
+  cur.execute("SELECT DISTINCT orthoID FROM OrthoGroups WHERE geneID LIKE %s", (species + '%'))
   for cluster in cur.fetchall():
     print cluster[0]
   
