@@ -68,6 +68,22 @@ do
   bash $BASEDIR/Scripts/RunCorset.sh
 done
 
+######################## DIFFERENTIAL EXPRESSION ANALYSES##################
+for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
+do
+  $BASEDIR/Scripts/FilterCounts.py --in $BASEDIR/Corset/${species}counts.txt --min 30 >$BASEDIR/DGEclust/${species}counts.txt
+  clust -t 10000 -dt 10 -g [[0,1],[2,3],[4,5],[6,7]] -o $BASEDIR/DGEclust/$species $BASEDIR/DGEclust/${species}counts.txt
+  for leaf1 in `seq 0 2`
+  do
+  for leaf22 in `seq $leaf1 3`
+  do
+    if ! test $leaf1 = $leaf2 && ( ! test $species = 'KRAUS' || ! test $leaf2 = 3 )
+    then
+        pvals -t0 1000 -tend 10000 -g1 $leaf1 -g2 $leaf2 -o ${species}_${leaf1}{$leaf2}.txt -i $species
+    fi
+  done
+done
+
 ######################## UPLOAD CORSET DATA AND WRITE REPRESENTATIVE SEQS TO FILE ##################
 for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
 do
