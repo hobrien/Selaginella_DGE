@@ -85,6 +85,7 @@ do
       if ! test $species = 'MOEL' || ! test $leaf2 = 3
       then
         pvals -t0 1000 -tend 10000 -g1 $leaf1 -g2 $leaf2 -o $BASEDIR/DGEclust/${species}_$(($leaf1+1))$(($leaf2+1)).txt -i $BASEDIR/DGEclust/$species
+        Rscript $BASEDIR/Scripts/DESeq_v_DGEClust.R $BASEDIR/DGEclust/${species}_$(($leaf1+1))$(($leaf2+1)).txt $BASEDIR/DGEclust/${species}counts.txt 0.001
       fi
     done
   done
