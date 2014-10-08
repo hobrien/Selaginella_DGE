@@ -18,6 +18,7 @@ done
 
 AddData.py -f sequences -i /Users/HeathOBrien/Bioinformatics/Selaginella/RefSeq/Selaginella_moellendorffii.v1.0.17.cdna.all.fa
 
+
  ######################################### RUN TRANSDECODER #############################################
 
 #rename amino acid sequences 
@@ -68,7 +69,7 @@ do
   bash $BASEDIR/Scripts/RunCorset.sh
 done
 
-######################## DIFFERENTIAL EXPRESSION ANALYSES##################
+############################## DIFFERENTIAL EXPRESSION ANALYSES ###########################
 for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
 do
   $BASEDIR/Scripts/FilterCounts.py --in $BASEDIR/Corset/${species}counts.txt --min 30 >$BASEDIR/DGEclust/${species}counts.txt
@@ -135,6 +136,9 @@ mcl $BASEDIR/OrthoMCL/mclInput --abc -I 1.2 -o $BASEDIR/OrthoMCL/MCL/out.data.mc
 orthomclMclToGroups OG2_ 0 < $BASEDIR/OrthoMCL/MCL/out.data.mci.I12 >$BASEDIR/OrthoMCL/Selaginella_groups.txt
 mysql -u root SelaginellaGenomics < $BASEDIR/Scripts/DeleteOrthologs.sql
 $BASEDIR/Scripts/AddData.py -f orthologs -i $BASEDIR/OrthoMCL/Selaginella_groups.txt
+
+#Add info about which gene families are plastid encoded
+echo "UPDATE OrthoGroups, OrthoGroupInfo  SET OrthoGroupInfo.genome = 'plastid' WHERE OrthoGroups.orthoID = OrthoGroupInfo.orthoID AND OrthoGroups.geneID LIKE 'EFJ_ADH%';" | mysql -u root SelaginellaGenomics
 
 ############################# MAKE VENN DIAGRAM OF ORTHOLOG OVERLAPS ###############################
 for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
