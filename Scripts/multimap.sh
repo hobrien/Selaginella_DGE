@@ -18,7 +18,7 @@ do
     then
       if ! test -f $BASEDIR/Mappings/${species}${leaf}_all.bam
       then
-        bowtie2 -a -x$BASEDIR/Index/${species}_Trinity_all \
+        bowtie2 -a -x $BASEDIR/Index/${species}_Trinity_all \
         -1 <( gunzip -c $BASEDIR/Reads/${species}${leaf}_1.filtered.fastq.gz ) \
         -2 <( gunzip -c $BASEDIR/Reads/${species}${leaf}_2.filtered.fastq.gz ) \
         | samtools view -bS - \
