@@ -21,6 +21,7 @@ Dependancies
 -Bowtie2 (http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
 -Corset (https://code.google.com/p/corset-project/)
 -DESeq (http://bioconductor.org/packages/release/bioc/html/DESeq.html)
+-DGEClust (http://dvav.me/dgeclust/)
 -ETE2 (http://etetoolkit.org/)
 -MAFFT (http://mafft.cbrc.jp/alignment/software/)
 -MySQL (http://www.mysql.com/)
