@@ -59,6 +59,8 @@ def main(argv):
       get_nr(cur, species)    
     elif function == 'counts':
       get_counts(cur, species)    
+    elif function == 'count_totals':
+      get_total_counts(cur, species)    
     elif function == 'corset':
       corset_nr(cur, species, infilename)    
     elif function == 'lengths':
@@ -70,6 +72,18 @@ def get_lengths(cur, species):
   cur.execute("SELECT CodingSequences.geneID, CodingSequences.start_pos, CodingSequences.end_pos FROM CodingSequences, CorsetGroups WHERE CorsetGroups.seqID = CodingSequences.seqID AND CorsetGroups.non_redundant = 1 AND CorsetGroups.seqID LIKE %s", species + '%')
   for row in cur.fetchall():
     print '\t'.join((species, row[0], str(row[2] - row[1] + 1)))
+
+def get_total_counts(cur, species):
+  if species == 'MOEL':
+    print '\t'.join((species + '1',  species + '2',  species + '3'))
+    cur.execute("SELECT clusterID, leaf1 + leaf1b, leaf2 + leaf2b, leaf3 + leaf3b FROM CorsetCounts WHERE speciesID =' %s GROUP BY clusterID", species)
+  else:
+    print '\t'.join((species + '1',  species + '2',  species + '3',  species + '4'))
+    #print "SELECT clusterID, leaf1 + leaf1b, leaf2 + leaf2b, leaf3 + leaf3b, leaf4 + leaf4b FROM CorsetCounts WHERE speciesID = '%s' GROUP BY clusterID" % species 
+    cur.execute("SELECT clusterID, leaf1 + leaf1b, leaf2 + leaf2b, leaf3 + leaf3b, leaf4 + leaf4b FROM CorsetCounts WHERE speciesID = %s GROUP BY clusterID", species)
+  for row in cur.fetchall():
+    print '\t'.join(map(str, row))
+
 
 def get_counts(cur, species):
   if species == 'all':
