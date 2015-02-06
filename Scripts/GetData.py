@@ -12,15 +12,16 @@ def main(argv):
   infilename = ''
   outfilename = ''
   function = ''
+  
   database = 'SelaginellaGenomics'
-  usage = "GetData.py -f <function> -i <infilename> -s <species> -c <cluster> -d <database> -o <outfile>"
+  usage = "GetData.py -f <function> -i <infilename> -s <species> -c <cluster> -d <database> -o <outfile> -v"
   try:
-     opts, args = getopt.getopt(argv,"hf:i:s:c:d:o:",["function", "ifile=", "species=", "cluster=", "db=", "ofile="])
+     opts, args = getopt.getopt(argv,"hvf:i:s:c:d:o:",["function", "ifile=", "species=", "cluster=", "db=", "ofile=", "verbose"])
   except getopt.GetoptError:
      print usage
      sys.exit(2)
   for opt, arg in opts:
-     if opt == '-h':
+     if opt in ("-h", "--help"):
         print usage
         sys.exit()
      elif opt in ("-i", "--ifile"):
@@ -35,7 +36,10 @@ def main(argv):
         database = arg
      elif opt in ("-o", "--ofile"):
         outfilename = arg
-  con = mdb.connect('localhost', 'root', '', database);
+     elif opt in ("-v", "--verbose"):
+        global verbose
+        verbose = 1
+  con = mdb.connect(host='localhost', user='root', db=database);
     
   with con:
     cur = con.cursor()
@@ -66,10 +70,23 @@ def main(argv):
     elif function == 'lengths':
       get_lengths(cur, species)    
 
-
+def PrintCommand(command, options=()):
+  if type(options) is str:
+    if command.count("%s") != 1:
+      sys.exit("Command requires %s options. %s supplied" % (command.count("%s"), 1))
+    options = (options, "")
+  elif command.count("%s") != len(options):
+    sys.exit("Command requires %s options. %s supplied" % (command.count("%s"), len(options)))
+  for param in options:
+    command =command.replace("%s", "'" + param + "'", 1)
+  return command + "\n"
+  
 def get_lengths(cur, species):
-  #print "SELECT CodingSequences.start_pos, CodingSequences.end_pos FROM CodingSequences, CorsetGroups WHERE CorsetGroups.seqID = CodingSequences.seqID AND CorsetGroups.non_redundant = 1 AND CorsetGroups.seqID LIKE '%s'" % species + '%'
-  cur.execute("SELECT CodingSequences.geneID, CodingSequences.start_pos, CodingSequences.end_pos FROM CodingSequences, CorsetGroups WHERE CorsetGroups.seqID = CodingSequences.seqID AND CorsetGroups.non_redundant = 1 AND CorsetGroups.seqID LIKE %s", species + '%')
+  command = "SELECT CodingSequences.geneID, CodingSequences.start_pos, CodingSequences.end_pos FROM CodingSequences, CorsetGroups WHERE CorsetGroups.seqID = CodingSequences.seqID AND CorsetGroups.non_redundant = 1 AND CorsetGroups.seqID LIKE %s"
+  options = (species + '%')
+  if verbose:
+    sys.stderr.write(PrintCommand(command, options))
+  cur.execute(command, options)
   for row in cur.fetchall():
     print '\t'.join((species, row[0], str(row[2] - row[1] + 1)))
 
@@ -215,6 +232,7 @@ def corset_nr(cur, speciesID, infilename):
     print ">%s\n%s" % (seq.id, seq.seq)
 
 if __name__ == "__main__":
+   verbose = 0
    main(sys.argv[1:])
 
 
