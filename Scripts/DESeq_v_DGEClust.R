@@ -57,8 +57,8 @@ vennplot <-function(pvalues, DEseq_cutoff, DGEclust_cutoff) {
                          cat.fontfamily='sans')
     }
     else {
-      draw.pairwise.venn(area1=nrow(pvalues[pvalues$DEseq_padj < DEseq_cutoff, ]), 
-                         area2=nrow(pvalues[pvalues$DGEclust_padj < DGEclust_cutoff, ]), 
+      draw.pairwise.venn(area1=nrow(pvalues[pvalues$DGEclust_padj < DGEclust_cutoff, ]),
+                         area2=nrow(pvalues[pvalues$DEseq_padj < DEseq_cutoff, ]), 
                          cross.area=nrow(pvalues[pvalues$DEseq_padj < DEseq_cutoff & pvalues$DGEclust_padj < DGEclust_cutoff, ]), 
                          fill=c('red', 'blue'), 
                          cat.col = c('red', 'blue'),
