@@ -114,9 +114,9 @@ sample1 <- paste("leaf", substr(DGEclust_file, regex_end + 2, regex_end + 2), se
 sample2 <- paste("leaf", substr(DGEclust_file, regex_end + 3, regex_end + 3), sep='')
 name = substr(DGEclust_file, regex_start, regex_end + 3)
 if (species == 'MOEL') {
-  condition = factor( c( "leaf1", "leaf1", "leaf2", "leaf2", "leaf3", "leaf3" ) )
+  condition = factor( c( "leaf1", "leaf2", "leaf3" ) )
 } else {
-  condition = factor( c( "leaf1", "leaf1", "leaf2", "leaf2", "leaf3", "leaf3", "leaf4", "leaf4"  ) )
+  condition = factor( c( "leaf1", "leaf2", "leaf3", "leaf4" ) )
 }
 DEseq<-newCountDataSet( CountTable, condition)
 DEseq <- estimateSizeFactors(DEseq)

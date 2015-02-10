@@ -72,12 +72,13 @@ done
 ############################## DIFFERENTIAL EXPRESSION ANALYSES ###########################
 for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
 do
-  $BASEDIR/Scripts/FilterCounts.py --in $BASEDIR/Corset/${species}counts.txt --min 30 >$BASEDIR/DGEclust/${species}counts.txt
+  $BASEDIR/Scripts/GetData.py -f count_totals -s $species > $BASEDIR/Corset/${species}count_totals.txt
+  $BASEDIR/Scripts/FilterCounts.py --in $BASEDIR/Corset/${species}count_totals.txt --min 30 >$BASEDIR/DGEclust/${species}counts.txt
   if test $species = 'MOEL'
   then
-    clust -t 10000 -dt 10 -g [[0,1],[2,3],[4,5]] -o $BASEDIR/DGEclust/$species $BASEDIR/DGEclust/${species}counts.txt  
+    clust -t 10000 -dt 10 -g [0,1,2] -o $BASEDIR/DGEclust/$species $BASEDIR/DGEclust/${species}counts.txt  
   else
-    clust -t 10000 -dt 10 -g [[0,1],[2,3],[4,5],[6,7]] -o $BASEDIR/DGEclust/$species $BASEDIR/DGEclust/${species}counts.txt
+    clust -t 10000 -dt 10 -g [0,1,2,3] -o $BASEDIR/DGEclust/$species $BASEDIR/DGEclust/${species}counts.txt
   fi
   for leaf1 in `seq 0 2`
   do
@@ -107,7 +108,6 @@ do
 done
 
 ################### PLOT LENGTH DIST AND OVERLAP OF NON-REDUNDANT CONTIGS ################
-BASEDIR=/Users/HeathOBrien/Bioinformatics/Selaginella_DGE
 if test -f $BASEDIR/Results/coding_lengths.txt
 then
   rm $BASEDIR/Results/coding_lengths.txt
@@ -153,6 +153,10 @@ $BASEDIR/Scripts/CompareSets.pl $BASEDIR/Results/OrthoGroups/UNC.txt \
                                 $BASEDIR/Results/OrthoGroups/WILD.txt 
 mv VennPlot.png $BASEDIR/Figures/ortholog_overlap.png
 echo "ortholog_overlap.png: venn diagram of ortholog group overlaps" >> $BASEDIR/Figures/README.md
+
+######### UPLOAD DATA ABOUT ADJUSTED P-VALUES FOR BOTH METHODS AND VSD CORRECTED EXPRESSION #########
+
+
 
 ######################################### RUN PHYLOTREE PRUNER #############################################
 mkdir /Users/HeathOBrien/Bioinformatics/Selaginella/Clusters
