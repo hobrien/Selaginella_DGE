@@ -93,11 +93,14 @@ def get_lengths(cur, species):
 def get_total_counts(cur, species):
   if species == 'MOEL':
     print '\t'.join((species + '1',  species + '2',  species + '3'))
-    cur.execute("SELECT clusterID, leaf1 + leaf1b, leaf2 + leaf2b, leaf3 + leaf3b FROM CorsetCounts WHERE speciesID =' %s GROUP BY clusterID", species)
+    command = "SELECT clusterID, leaf1 + leaf1b, leaf2 + leaf2b, leaf3 + leaf3b FROM CorsetCounts WHERE speciesID = %s GROUP BY clusterID"
   else:
     print '\t'.join((species + '1',  species + '2',  species + '3',  species + '4'))
-    #print "SELECT clusterID, leaf1 + leaf1b, leaf2 + leaf2b, leaf3 + leaf3b, leaf4 + leaf4b FROM CorsetCounts WHERE speciesID = '%s' GROUP BY clusterID" % species 
-    cur.execute("SELECT clusterID, leaf1 + leaf1b, leaf2 + leaf2b, leaf3 + leaf3b, leaf4 + leaf4b FROM CorsetCounts WHERE speciesID = %s GROUP BY clusterID", species)
+    command = "SELECT clusterID, leaf1 + leaf1b, leaf2 + leaf2b, leaf3 + leaf3b, leaf4 + leaf4b FROM CorsetCounts WHERE speciesID = %s GROUP BY clusterID"
+  options = (species)
+  if verbose:
+    sys.stderr.write(PrintCommand(command, options))  
+  cur.execute(command, options)
   for row in cur.fetchall():
     print '\t'.join(map(str, row))
 
