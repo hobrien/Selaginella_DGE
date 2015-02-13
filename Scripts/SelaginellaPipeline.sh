@@ -69,31 +69,6 @@ do
   bash $BASEDIR/Scripts/RunCorset.sh
 done
 
-############################## DIFFERENTIAL EXPRESSION ANALYSES ###########################
-for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
-do
-  $BASEDIR/Scripts/GetData.py -f count_totals -s $species > $BASEDIR/Corset/${species}count_totals.txt
-  $BASEDIR/Scripts/FilterCounts.py --in $BASEDIR/Corset/${species}count_totals.txt --min 30 >$BASEDIR/DGEclust/${species}counts.txt
-  if test $species = 'MOEL'
-  then
-    clust -t 10000 -dt 10 -g [0,1,2] -o $BASEDIR/DGEclust/$species $BASEDIR/DGEclust/${species}counts.txt  
-  else
-    clust -t 10000 -dt 10 -g [0,1,2,3] -o $BASEDIR/DGEclust/$species $BASEDIR/DGEclust/${species}counts.txt
-  fi
-  for leaf1 in `seq 0 2`
-  do
-    for leaf2 in `seq $(($leaf1+1)) 3`
-    do
-      if ! test $species = 'MOEL' || ! test $leaf2 = 3
-      then
-        pvals -t0 1000 -tend 10000 -g1 $leaf1 -g2 $leaf2 -o $BASEDIR/DGEclust/${species}_$(($leaf1+1))$(($leaf2+1)).txt -i $BASEDIR/DGEclust/$species
-        Rscript $BASEDIR/Scripts/DESeq2_v_DGEClust.R $BASEDIR/DGEclust/${species}_$(($leaf1+1))$(($leaf2+1)).txt $BASEDIR/DGEclust/${species}counts.txt 0.01
-        python $BASEDIR/Scripts/AddData.py -f de -n ${species} -i $BASEDIR/DGEclust/${species}_$(($leaf1+1))$(($leaf2+1))_0.01_overlap2.txt
-      fi
-    done
-  done
-done
-
 ######################## UPLOAD CORSET DATA AND WRITE REPRESENTATIVE SEQS TO FILE ##################
 for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
 do
@@ -155,8 +130,48 @@ $BASEDIR/Scripts/CompareSets.pl $BASEDIR/Results/OrthoGroups/UNC.txt \
 mv VennPlot.png $BASEDIR/Figures/ortholog_overlap.png
 echo "ortholog_overlap.png: venn diagram of ortholog group overlaps" >> $BASEDIR/Figures/README.md
 
-######### UPLOAD DATA ABOUT ADJUSTED P-VALUES FOR BOTH METHODS AND VSD CORRECTED EXPRESSION #########
+############################## DIFFERENTIAL EXPRESSION ANALYSES ###########################
+for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
+do
+  $BASEDIR/Scripts/GetData.py -f count_totals -s $species > $BASEDIR/Corset/${species}count_totals.txt
+  $BASEDIR/Scripts/FilterCounts.py --in $BASEDIR/Corset/${species}count_totals.txt --min 30 >$BASEDIR/DGEclust/${species}counts.txt
+  if test $species = 'MOEL'
+  then
+    clust -t 10000 -dt 10 -g [0,1,2] -o $BASEDIR/DGEclust/$species $BASEDIR/DGEclust/${species}counts.txt  
+  else
+    clust -t 10000 -dt 10 -g [0,1,2,3] -o $BASEDIR/DGEclust/$species $BASEDIR/DGEclust/${species}counts.txt
+  fi
+  for leaf1 in `seq 0 2`
+  do
+    for leaf2 in `seq $(($leaf1+1)) 3`
+    do
+      if ! test $species = 'MOEL' || ! test $leaf2 = 3
+      then
+        pvals -t0 1000 -tend 10000 -g1 $leaf1 -g2 $leaf2 -o $BASEDIR/DGEclust/${species}_$(($leaf1+1))$(($leaf2+1)).txt -i $BASEDIR/DGEclust/$species
+        Rscript $BASEDIR/Scripts/DESeq2_v_DGEClust.R $BASEDIR/DGEclust/${species}_$(($leaf1+1))$(($leaf2+1)).txt $BASEDIR/DGEclust/${species}counts.txt 0.01
+        python $BASEDIR/Scripts/AddData.py -f de -n ${species} -i $BASEDIR/DGEclust/${species}_$(($leaf1+1))$(($leaf2+1))_0.01_overlap2.txt
+      fi
+    done
+  done
+done
 
+############################# MAKE VENN DIAGRAM OF DE GENES ###############################
+if ! test -d $BASEDIR/Results/DEgroups/
+then
+  mkdir $BASEDIR/Results/DEgroups/
+fi
+for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
+do
+  $BASEDIR/Scripts/GetData.py -f de -s $species > $BASEDIR/Results/DEgroups/$species.txt
+done
+echo "DEgroups: lists of ortholog groups with at least 1 member DE in at least 1 comparison for each species" >> $BASEDIR/Results/README.md
+cd $BASEDIR/Figures
+$BASEDIR/Scripts/CompareSets.pl $BASEDIR/Results/DEgroups/UNC.txt \
+                                $BASEDIR/Results/DEgroups/MOEL.txt \
+                                $BASEDIR/Results/DEgroups/KRAUS.txt \
+                                $BASEDIR/Results/DEgroups/WILD.txt 
+mv VennPlot.png $BASEDIR/Figures/de_ortholog_overlap.png
+echo "de_ortholog_overlap.png: venn diagram of overlap of DE genes" >> $BASEDIR/Figures/README.md
 
 
 ######################################### RUN PHYLOTREE PRUNER #############################################

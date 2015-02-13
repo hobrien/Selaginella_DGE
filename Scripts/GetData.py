@@ -69,6 +69,17 @@ def main(argv):
       corset_nr(cur, species, infilename)    
     elif function == 'lengths':
       get_lengths(cur, species)    
+    elif function == 'de':
+      get_de_groups(cur, species) 
+      
+def get_de_groups(cur, species):
+  command = "SELECT DISTINCT(OrthoGroups.orthoID) FROM OrthoGroups, CodingSequences, CorsetGroups, DEclusters WHERE OrthoGroups.geneID = CodingSequences.geneID AND CodingSequences.seqID = CorsetGroups.seqID and CorsetGroups.clusterID = DEclusters.clusterID AND DEclusters.speciesID =  %s"
+  options = (species)
+  if verbose:
+    sys.stderr.write(PrintCommand(command, options))
+  cur.execute(command, options)
+  for cluster in cur.fetchall():
+    print cluster[0]
 
 def PrintCommand(command, options=()):
   if type(options) is str:
