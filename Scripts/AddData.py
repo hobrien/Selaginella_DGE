@@ -66,6 +66,24 @@ def main(argv):
       add_corset_counts(cur, infilename, name)
     if function == 'corset_nr':
       corset_nr(cur, name)
+    if function == 'de':
+      differential_expression(cur, infilename, name)
+
+def differential_expression(cur, infilename, name):
+  with open(infilename, 'rU') as f:
+    reader=csv.reader(f,delimiter=' ')
+    headers = reader.next()
+    (sample1, sample2) = headers[0:2]
+    for row in reader:
+      try:
+        (clusterID, sample1expr, sample2expr, avgLogExpr, rLogFC, DGEclust_padj) = row
+      except ValueError:
+        continue
+      try:
+        cur.execute("INSERT INTO DEclusters(clusterID, SpeciesID, sample1, sample2, sample1expr, sample2expr, avgLogExpr, rLogFC, DGEclust_padj) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)", (clusterID, name, sample1, sample2, sample1expr, sample2expr, avgLogExpr, rLogFC, DGEclust_padj))
+      except mdb.IntegrityError, e:
+        warnings.warn("%s" % e)
+        pass
 
 def corset_nr(cur, speciesID):
     print "SELECT CorsetGroups.seqID, Max(Blast.hitlen) FROM Blast, CorsetGroups, CodingSequences WHERE CorsetGroups.seqID = CodingSequences.seqID AND CodingSequences.geneID = Blast.qseqid AND Blast.qseqid != Blast.sseqid AND CorsetGroups.speciesID = %s GROUP BY CorsetGroups.clusterID" % speciesID
