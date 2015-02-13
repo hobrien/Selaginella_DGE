@@ -72,7 +72,6 @@ Setup<- data.frame(row.names=colnames(CountTable), condition = factor( c( sample
 DEseq_data<-DESeqDataSetFromMatrix(countData = CountTable,
                                   colData = Setup,
                                   design = ~ condition)
-DEseq_data <- DESeq(DEseq_data)
 rld <- rlogTransformation( DEseq_data )
 results <- data.frame(
     assay(rld), 
@@ -84,12 +83,21 @@ results$"DGEclust_padj"<-DGEclust[,"padj"][match(row.names(results), row.names(D
 write.table(results[results$DGEclust_padj < DGEclust_cutoff & abs(results$rLogFC)>1, ], textfile)
 title <- sprintf("Volcano plot for %s vs %s", sample1, sample2)
 pdf(plotfile)
-ggplot(results, aes(x=rLogFC, y=DGEclust_padj)) +
-	geom_point(alpha=0.1, size=2, colour="dark blue") +
-	geom_point(size=2, data=subset(results, DGEclust_padj < 0.01 & abs(rLogFC)>1), aes(colour='red')) +
-	fte_theme() +
-	scale_y_continuous(trans = reverselog_trans(10)) +
-	labs(title=title, x="fold change (log2)", y="p-values")
+sig_res<-results[results$DGEclust_padj < 0.01 & abs(results$rLogFC)>1,]
+if (nrow(sig_res) > 0){
+	ggplot(results, aes(x=rLogFC, y=DGEclust_padj)) +
+		geom_point(alpha=0.1, size=2, colour="dark blue") +
+		geom_point(size=2, data=sig_res, aes(colour='red')) +
+		fte_theme() +
+		scale_y_continuous(trans = reverselog_trans(10), breaks=c(.1,.01,.001, 0.0001), labels=comma) +
+		labs(title=title, x="fold change (log2)", y="p-values")
+	} else {
+	ggplot(results, aes(x=rLogFC, y=DGEclust_padj)) +
+		geom_point(alpha=0.1, size=2, colour="dark blue") +
+		fte_theme() +
+		scale_y_continuous(trans = reverselog_trans(10), breaks=c(.1,.01,.001, 0.0001), labels=comma) +
+		labs(title=title, x="fold change (log2)", y="p-values")
+}
 dev.off()
 
 
