@@ -154,6 +154,7 @@ do
     done
   done
 done
+Rscript $BASEDIR/Scripts/VolcanoPlot.R $BASEDIR/Figures/Volcano.png
 
 ############################# MAKE VENN DIAGRAM OF DE GENES ###############################
 if ! test -d $BASEDIR/Results/DEgroups/
