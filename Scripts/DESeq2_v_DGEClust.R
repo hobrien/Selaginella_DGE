@@ -4,6 +4,8 @@ library(DESeq2)
 library(scales)
 library(RColorBrewer)
 require(grid)
+library(DBI)
+library(RMySQL)
 
 fte_theme <- function() {
     
@@ -99,5 +101,12 @@ if (nrow(sig_res) > 0){
 		labs(title=title, x="fold change (log2)", y="p-values")
 }
 dev.off()
-
+results$sample1<-colnames(results)[1]
+results$sample2<-colnames(results)[2]
+colnames(results)[1]<-'sample1Expr'
+colnames(results)[2]<-'sample2Expr'
+results$clusterID<-rownames(results)
+results$speciesID<-substr(results$sample1, 1, nchar(results$sample1)-1)
+con<-dbConnect(RMySQL::MySQL(), user='root', password='', host='localhost', dbname='SelaginellaGenomics')
+dbWriteTable(conn = con, name = 'Expression', value = results, append=T, row.names=F)
 
