@@ -2,7 +2,7 @@ MAXCLUST=30466
 BASEDIR=/Users/HeathOBrien/Bioinformatics/Selaginella_DGE
 
 #initialise database with species info
-mysql -u root SelaginellaGenomics < /Users/HeathOBrien/Google\ Drive/Selaginella/DB/selaginellaSQL.txt
+mysql -u root SelaginellaGenomics < $BASEDIR/Scripts/InitializeSelaginellaGenomics.sql
 
 #Add BLUELEAF sequences to database
 for file in `find /Users/HeathOBrien/Bioinformatics/Selaginella/Assemblies | grep "_Tr.fa$"`
