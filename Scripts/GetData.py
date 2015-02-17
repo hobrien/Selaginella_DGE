@@ -73,7 +73,7 @@ def main(argv):
       get_de_groups(cur, species) 
       
 def get_de_groups(cur, species):
-  command = "SELECT DISTINCT(OrthoGroups.orthoID) FROM OrthoGroups, CodingSequences, CorsetGroups, DEclusters WHERE OrthoGroups.geneID = CodingSequences.geneID AND CodingSequences.seqID = CorsetGroups.seqID and CorsetGroups.clusterID = DEclusters.clusterID AND DEclusters.speciesID =  %s"
+  command = "SELECT DISTINCT(OrthoGroups.orthoID) FROM OrthoGroups, CodingSequences, CorsetGroups, DEgenes WHERE OrthoGroups.geneID = CodingSequences.geneID AND CodingSequences.seqID = CorsetGroups.seqID AND CorsetGroups.clusterID = DEgenes.clusterID AND CorsetGroups.speciesID = DEgenes.speciesID AND DEgenes.speciesID =  %s"
   options = (species)
   if verbose:
     sys.stderr.write(PrintCommand(command, options))
