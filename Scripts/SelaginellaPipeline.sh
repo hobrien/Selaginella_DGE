@@ -18,6 +18,10 @@ done
 
 AddData.py -f sequences -i /Users/HeathOBrien/Bioinformatics/Selaginella/RefSeq/Selaginella_moellendorffii.v1.0.17.cdna.all.fa
 
+#Add Arabidopsis homologs from ENSEMBL to DB
+
+#Ideally there should be code here to get the homologs. A project for another day
+python $BASEDIR/Scripts/AddData.py -f ath -i Homologs/AthHomologs.txt
 
  ######################################### RUN TRANSDECODER #############################################
 

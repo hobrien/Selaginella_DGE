@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/Users/HeathOBrien/anaconda/bin/python
 
 """
 A number of functions to add data to Selaginella database from csv files or from sequence
@@ -19,7 +19,7 @@ def main(argv):
   database = 'SelaginellaGenomics'
   name = ''
   try:
-     opts, args = getopt.getopt(argv,"hf:i:s:d:n:",["function", "infile=", "seqfile=", "database=", "name="])
+     opts, args = getopt.getopt(argv,"hvf:i:s:d:n:",["function", "infile=", "seqfile=", "database=", "name="])
   except getopt.GetoptError:
      print usage
      sys.exit(2)
@@ -37,10 +37,13 @@ def main(argv):
         database = arg
      elif opt in ("-n", "--name"):
         name = arg
+     elif opt in ("-v", "--verbose"):
+        global verbose
+        verbose = 1
         
   if function == 'ref_coding':
     infilename = 1  #don't need a infile for this function. This prevents an error in the following lines
-  con = mdb.connect('localhost', 'root', '', database);
+  con = mdb.connect('localhost', 'root', '', database)
   with con:
     cur = con.cursor()
     if function == 'TAIR':
@@ -68,6 +71,45 @@ def main(argv):
       corset_nr(cur, name)
     if function == 'de':
       differential_expression(cur, infilename, name)
+    if function == 'ath':
+      add_Ath(cur, infilename)
+
+def PrintCommand(command, options=()):
+  if type(options) is str:
+    if command.count("%s") != 1:
+      sys.exit("Command requires %s options. %s supplied" % (command.count("%s"), 1))
+    options = (options, "")
+  elif command.count("%s") != len(options):
+    sys.exit("Command requires %s options. %s supplied" % (command.count("%s"), len(options)))
+  for param in options:
+    command =command.replace("%s", "'" + param + "'", 1)
+  return command + "\n"
+
+def add_Ath(cur, infilename):
+  with open(infilename, 'rU') as f:
+    reader=csv.reader(f,delimiter='\t')
+    headers = reader.next()
+    for row in reader:
+      try:
+        (EnsemblGeneID, EnsemblTranscriptID, PercIdentity, HomologyType, AthEnsemblGeneID) = row
+      except ValueError:
+        warnings.warn("wrong number of columns")
+        continue
+      if 'EFJ' in EnsemblTranscriptID:
+         EnsemblTranscriptID = EnsemblTranscriptID.replace('EFJ', 'EFJ_')
+      else:
+         EnsemblTranscriptID = 'EFJ_' + EnsemblTranscriptID   
+      if not AthEnsemblGeneID:
+         continue
+      command = "INSERT INTO AthHomologs(seqID, athID, percen_identity, homology_type) VALUES(%s, %s, %s, %s)"
+      options = (EnsemblTranscriptID, AthEnsemblGeneID, PercIdentity, HomologyType)
+      if verbose:
+         sys.stderr.write(PrintCommand(command, options))
+      try:
+        cur.execute(command, options)
+      except mdb.IntegrityError, e:
+        warnings.warn("%s" % e)
+        pass
 
 def differential_expression(cur, infilename, name):
   with open(infilename, 'rU') as f:
@@ -348,6 +390,7 @@ def get_accession(record):
     return parts[3].split('.')[0]
     
 if __name__ == "__main__":
+   verbose = 0
    main(sys.argv[1:])
 
 
