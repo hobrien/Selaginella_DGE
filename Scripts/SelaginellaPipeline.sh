@@ -156,6 +156,13 @@ do
 done
 Rscript $BASEDIR/Scripts/VolcanoPlot.R $BASEDIR/Figures/Volcano.png
 
+############################# MAKE LIST OF CHIMERIC DE GENES ###############################
+
+rm /tmp/chimeras.txt
+mysql -u root SelaginellaGenomics < $BASEDIR/Scripts/DEchimeras.sql
+cp /tmp/chimeras.txt $BASEDIR/Results/chimeras.txt
+echo "chimeras.txt: list of DE genes with 2 or more CDSs" >> $BASEDIR/Results/README.md
+
 ############################# MAKE VENN DIAGRAM OF DE GENES ###############################
 if ! test -d $BASEDIR/Results/DEgroups/
 then
@@ -173,12 +180,6 @@ $BASEDIR/Scripts/CompareSets.pl $BASEDIR/Results/DEgroups/UNC.txt \
                                 $BASEDIR/Results/DEgroups/WILD.txt 
 mv VennPlot.png $BASEDIR/Figures/de_ortholog_overlap.png
 echo "de_ortholog_overlap.png: venn diagram of overlap of DE genes" >> $BASEDIR/Figures/README.md
-
-############################# MAKE LIST OF CHIMERIC DE GENES ###############################
-
-HeathOBrien$ mysql -u root SelaginellaGenomics < $BASEDIR/Scripts/DEchimeras.sql
-mv /tmp/chimeras.txt $BASEDIR/Results/chimeras.txt
-echo "chimeras.txt: list of DE genes with 2 or more CDSs" >> $BASEDIR/Results/README.md
 
 ######################################### RUN PHYLOTREE PRUNER #############################################
 mkdir /Users/HeathOBrien/Bioinformatics/Selaginella/Clusters
