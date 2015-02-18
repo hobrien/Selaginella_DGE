@@ -2,6 +2,7 @@ MAXCLUST=30466
 BASEDIR=/Users/HeathOBrien/Bioinformatics/Selaginella_DGE
 
 #initialise database with species info
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS 'SelaginellaGenomics'"
 mysql -u root SelaginellaGenomics < $BASEDIR/Scripts/InitializeSelaginellaGenomics.sql
 
 #Add BLUELEAF sequences to database
@@ -105,6 +106,7 @@ echo "coding_lengths.png: histograms of lengths of coding portions for non-redun
 cd $BASEDIR/OrthoMCL/
 orthomclFilterFasta $BASEDIR/OrthoMCL/compliantFasta/ 10 20 #I'm not sure if this file is actually needed for anything
 $BASEDIR/Scripts/FilterBlast.py -i $BASEDIR/Blast/Selmo_all.bl > $BASEDIR/OrthoMCL/goodProteins.bl
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS 'orthomcl'"
 mysql -u root orthomcl < $BASEDIR/Scripts/InitializeDB.sql
 orthomclInstallSchema $BASEDIR/OrthoMCL/orthomcl.config.template
 orthomclBlastParser $BASEDIR/OrthoMCL/goodProteins.bl $BASEDIR/OrthoMCL/compliantFasta > $BASEDIR/OrthoMCL/similarSequences.txt
