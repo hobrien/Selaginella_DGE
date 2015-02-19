@@ -102,6 +102,23 @@ echo "coding_lengths.txt: lengths of coding portion of each non-redundant contig
 Rscript $BASEDIR/Scripts/PlotLengths.R $BASEDIR/Results/coding_lengths.txt $BASEDIR/Figures/coding_lengths.png
 echo "coding_lengths.png: histograms of lengths of coding portions for non-redundant contig" >> $BASEDIR/Figures/README.md
 
+###### IDENTIFY NON-REDUNDANT CONTIGS WITH > 1 CODING SEQUENCE AND BLAST AGAINST REF #####
+
+if ! test -d $BASEDIR/Chimeras
+then
+  mkdir $BASEDIR/Chimeras
+fi
+if ! test -f $BASEDIR/Blast/Selmo_ensembl.psq || if ! test -f $BASEDIR/Blast/Selmo_ensembl.pin || if ! test -f $BASEDIR/Blast/Selmo_ensembl.phr
+then
+  makeblastdb -in $BASEDIR/RefSeq/Selaginella_moellendorffii.v1.0.17.pep.all.fa -dbtype prot -out $BASEDIR/Blast/Selmo_ensembl
+fi
+
+for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
+do
+  $BASEDIR/Scripts/GetData.py -f chimeric -s $species > $BASEDIR/Chimeras/$species.fa
+  blastx -query $BASEDIR/Chimeras/$species.fa -db $BASEDIR/Blast/Selmo_ensembl -outfmt 6 -out $BASEDIR/Chimeras/$species.bl -num_threads 6
+done
+
 ######################################### RUN ORTHOMCL #############################################
 cd $BASEDIR/OrthoMCL/
 orthomclFilterFasta $BASEDIR/OrthoMCL/compliantFasta/ 10 20 #I'm not sure if this file is actually needed for anything
@@ -120,7 +137,7 @@ mysql -u root SelaginellaGenomics < $BASEDIR/Scripts/DeleteOrthologs.sql
 $BASEDIR/Scripts/AddData.py -f orthologs -i $BASEDIR/OrthoMCL/Selaginella_groups.txt
 
 #Add info about which gene families are plastid encoded
-echo "UPDATE OrthoGroups, OrthoGroupInfo  SET OrthoGroupInfo.genome = 'plastid' WHERE OrthoGroups.orthoID = OrthoGroupInfo.orthoID AND OrthoGroups.geneID LIKE 'EFJ_ADH%';" | mysql -u root SelaginellaGenomics
+echo "UPDATE OrthoGroups, OrthoGroupInfo SET OrthoGroupInfo.genome = 'plastid' WHERE OrthoGroups.orthoID = OrthoGroupInfo.orthoID AND OrthoGroups.geneID LIKE 'EFJ_ADH%';" | mysql -u root SelaginellaGenomics
 
 ############################# MAKE VENN DIAGRAM OF ORTHOLOG OVERLAPS ###############################
 for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'

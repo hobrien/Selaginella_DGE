@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/Users/HeathOBrien/anaconda/bin/python
 
 import sys, getopt, csv
 import MySQLdb as mdb
@@ -39,7 +39,7 @@ def main(argv):
      elif opt in ("-v", "--verbose"):
         global verbose
         verbose = 1
-  con = mdb.connect(host='localhost', user='root', db=database);
+  con = mdb.connect(host='localhost', user='root', db=database)
     
   with con:
     cur = con.cursor()
@@ -71,6 +71,8 @@ def main(argv):
       get_lengths(cur, species)    
     elif function == 'de':
       get_de_groups(cur, species) 
+    elif function == 'chimeric':
+      get_chimeric(cur, species)
       
 def get_de_groups(cur, species):
   command = "SELECT DISTINCT(OrthoGroups.orthoID) FROM OrthoGroups, CodingSequences, CorsetGroups, DEgenes WHERE OrthoGroups.geneID = CodingSequences.geneID AND CodingSequences.seqID = CorsetGroups.seqID AND CorsetGroups.clusterID = DEgenes.clusterID AND CorsetGroups.speciesID = DEgenes.speciesID AND DEgenes.speciesID =  %s"
@@ -80,6 +82,15 @@ def get_de_groups(cur, species):
   cur.execute(command, options)
   for cluster in cur.fetchall():
     print cluster[0]
+
+def get_chimeric(cur, species):
+  command = "SELECT CodingSequences.seqID, Sequences.sequence from CodingSequences, CorsetGroups, Sequences WHERE CorsetGroups.seqID = CodingSequences.seqID AND CodingSequences.seqID = Sequences.seqID AND CorsetGroups.non_redundant = 1 AND CorsetGroups.speciesID = %s GROUP BY CodingSequences.SeqID HAVING COUNT(CodingSequences.geneID) > 1"
+  options = (species)
+  if verbose:
+    sys.stderr.write(PrintCommand(command, options))
+  cur.execute(command, options)
+  for (id, species) in cur.fetchall():
+    print '>%s\n%s' % (id, species)
 
 def PrintCommand(command, options=()):
   if type(options) is str:
