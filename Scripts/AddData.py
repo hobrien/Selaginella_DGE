@@ -62,7 +62,9 @@ def main(argv):
     if function == 'counts':
       add_counts(cur, infilename, name)
     if function == 'blast':
-      add_blast(cur, infilename)
+      add_blast(cur, infilename, 'Blast')
+    if function == 'blastx':
+      add_blast(cur, infilename, 'BlastX')
     if function == 'corset_clusters':
       add_corset_clusters(cur, infilename, name)
     if function == 'corset_counts':
@@ -163,7 +165,11 @@ def add_corset_counts(cur, infilename, name):
         except ValueError:
           continue
 
-def add_blast(cur, infilename):
+def add_blast(cur, infilename, table):
+  if table == 'BlastX':
+      command = "INSERT INTO BlastX(qseqid, sseqid, pident, hitlen, mismatch, gapopen, qstart, qend, sstart, send, evalue, bitscore) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+  else:
+      command = "INSERT INTO Blast(qseqid, sseqid, pident, hitlen, mismatch, gapopen, qstart, qend, sstart, send, evalue, bitscore) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
   with open(infilename, 'rU') as f:
     reader=csv.reader(f,delimiter='\t')
     for row in reader:
@@ -175,9 +181,16 @@ def add_blast(cur, infilename):
       sseqid = sseqid.replace('|', '_')
       qseqid = qseqid.replace('KRUS', 'KRAUS')
       sseqid = sseqid.replace('KRUS', 'KRAUS')
-      #print "INSERT INTO Blast(qseqid, sseqid, pident, hitlen, mismatch, gapopen, qstart, qend, sstart, send, evalue, bitscore) VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (qseqid, sseqid, pident, hitlen, mismatch, gapopen, qstart, qend, sstart, send, evalue, bitscore)
-      cur.execute("INSERT INTO Blast(qseqid, sseqid, pident, hitlen, mismatch, gapopen, qstart, qend, sstart, send, evalue, bitscore) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (qseqid, sseqid, pident, hitlen, mismatch, gapopen, qstart, qend, sstart, send, evalue, bitscore))
+      options = (qseqid, sseqid, pident, hitlen, mismatch, gapopen, qstart, qend, sstart, send, evalue, bitscore)
+      if verbose:
+         sys.stderr.write(PrintCommand(command, options))
+      try:
+        cur.execute(command, options)
+      except mdb.IntegrityError, e:
+        warnings.warn("%s" % e)
+        pass
         
+
 def add_counts(cur, infilename, name):
   infile = open(infilename, 'r')
   for line in infile.readlines():

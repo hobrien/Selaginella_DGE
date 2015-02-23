@@ -117,6 +117,7 @@ for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
 do
   $BASEDIR/Scripts/GetData.py -f chimeric -s $species > $BASEDIR/Chimeras/$species.fa
   blastx -query $BASEDIR/Chimeras/$species.fa -db $BASEDIR/Blast/Selmo_ensembl -outfmt 6 -out $BASEDIR/Chimeras/$species.bl -num_threads 6
+  $BASEDIR/Scripts/AddData.py -f blastx -i $BASEDIR/Chimeras/$species.bl
 done
 
 ######################################### RUN ORTHOMCL #############################################
