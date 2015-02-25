@@ -17,14 +17,13 @@ import MySQLdb as mdb
 
 
 def main(argv):
-  usage = 'FixChimeras -s <species> -d database_name -o overlap_cutoff'
+  usage = 'FixChimeras -d database_name -o overlap_cutoff [-s <species>|-c <contigID>] [-v]'
   species = ''
+  contig = ''
   database = 'SelaginellaGenomics'
   overlap = .1
-  global verbose
-  verbose = 0
   try:
-     opts, args = getopt.getopt(argv,"hvs:o:",["help", "verbose", "species=", "database=", "overlap="])
+     opts, args = getopt.getopt(argv,"hvs:o:c:",["help", "verbose", "species=", "database=", "overlap=", "contig="])
   except getopt.GetoptError:
      print usage
      sys.exit(2)
@@ -34,25 +33,58 @@ def main(argv):
         sys.exit()
      elif opt in ("-s", "--species"):
         species = arg
+     elif opt in ("-c", "--contig"):
+        contig = arg
      elif opt in ("-d", "--database"):
         database = arg
      elif opt in ("-overlap", "--overlap"):
         overlap = float(arg)
      elif opt in ("-v", "--verbose"):
+        global verbose
         verbose = 1
 
   con = mdb.connect(host='localhost', user='root', db=database)
   with con:
     cur = con.cursor()
-    Intervals = GetIntervals('KRAUScomp118699_c0_seq1', overlap, cur)
-    OldCoding = GetCoding('KRAUScomp118699_c0_seq1', cur)
-    for new_coding in UpdateCoding(Intervals, OldCoding, overlap):
-        print "INSERT INTO CodingSequences(geneID, seqID, species, start_pos, end_pos, strand, start_codon," 
-        print "stop_codon, notes) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s),"
-        print new_coding['geneID'], new_coding['seqID'], new_coding['species'], new_coding['start_pos'],
-        print new_coding['end_pos'], new_coding['strand'], new_coding['start_codon'], new_coding['stop_codon'],
-        print new_coding['notes']
-        print
+    if contig:
+        command = """SELECT CodingSequences.seqID from CodingSequences, CorsetGroups 
+                           WHERE CorsetGroups.seqID = CodingSequences.seqID 
+                           AND CorsetGroups.non_redundant = 1 
+                           AND CodingSequences.seqID = %s 
+                           GROUP BY CodingSequences.SeqID 
+                           HAVING COUNT(CodingSequences.geneID) > 1"""
+        options = (contig)
+    elif species:
+        command = """SELECT CodingSequences.seqID from CodingSequences, CorsetGroups 
+                           WHERE CorsetGroups.seqID = CodingSequences.seqID 
+                           AND CorsetGroups.non_redundant = 1 
+                           AND CodingSequences.species = %s 
+                           GROUP BY CodingSequences.SeqID 
+                           HAVING COUNT(CodingSequences.geneID) > 1"""
+        options = (species)
+    else:
+        command = """SELECT CodingSequences.seqID from CodingSequences, CorsetGroups 
+                           WHERE CorsetGroups.seqID = CodingSequences.seqID 
+                           AND CorsetGroups.non_redundant = 1 
+                           GROUP BY CodingSequences.SeqID 
+                           HAVING COUNT(CodingSequences.geneID) > 1"""
+        options = ()
+    if verbose:
+       sys.stderr.write(PrintCommand(command, options))
+    cur.execute(command, options)
+    for row in cur.fetchall():
+        seqID = row[0]
+        Intervals = GetIntervals(seqID, overlap, cur)
+        OldCoding = GetCoding(seqID, cur)
+        
+        for new_coding in UpdateCoding(Intervals, OldCoding, overlap):
+            command = """INSERT INTO CodingSequences(geneID, seqID, species, start_pos, end_pos, strand, start_codon, 
+                         stop_codon, notes) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s);"""
+            options = (new_coding['geneID'], new_coding['seqID'], new_coding['species'], new_coding['start_pos'],
+                       new_coding['end_pos'], new_coding['strand'], new_coding['start_codon'], new_coding['stop_codon'],
+                       new_coding['notes'])
+            if verbose:
+                sys.stderr.write(PrintCommand(command, options))
         
 
 def UpdateCoding(intervals, old_coding, max_overlap):
@@ -173,14 +205,21 @@ def GetCoding(qseqid, cur):
 def GetIntervals(qseqid, max_overlap, cur):
     col_names = 'qseqid sseqid qstart qend sstart send'
     intervals = []
-    cur.execute("SELECT DISTINCT sseqid FROM BlastX WHERE qseqid = %s ORDER BY evalue", qseqid)
-    for (hit) in cur.fetchall():
+    command = "SELECT DISTINCT sseqid FROM BlastX WHERE qseqid = %s ORDER BY evalue"
+    options = (qseqid)
+    if verbose:
+       sys.stderr.write(PrintCommand(command, options))
+    cur.execute(command, options)
+    for hit in cur.fetchall():
         results = []
-        cur.execute("""SELECT qseqid, sseqid, qstart, qend, sstart, send FROM BlastX WHERE qseqid = 'KRAUScomp118699_c0_seq1' 
-                    AND sseqid = %s ORDER BY evalue;""", hit[0])
+        command = """SELECT qseqid, sseqid, qstart, qend, sstart, send FROM BlastX WHERE qseqid = %s 
+                    AND sseqid = %s ORDER BY evalue;"""
+        options = (qseqid, hit[0])
+        if verbose:
+            sys.stderr.write(PrintCommand(command, options))
+        cur.execute(command, options)
         for row in cur.fetchall():
-                results.append(parse_blast_stats(col_names, row))
-
+            results.append(parse_blast_stats(col_names, row))
         sorted_hits = combine_hits(results)
         include = 1
         for interval in intervals:
@@ -280,6 +319,19 @@ def parse_blast_stats(column_names, row):
       result['strand'] = -1
   
   return result 
-  
+
+def PrintCommand(command, options=()):
+  if type(options) is str:
+    if command.count("%s") != 1:
+      sys.exit("Command requires %s options. %s supplied" % (command.count("%s"), 1))
+    options = (options, "")
+  elif command.count("%s") != len(options):
+    sys.exit("Command requires %s options. %s supplied" % (command.count("%s"), len(options)))
+  for param in options:
+    command =command.replace("%s", "'" + str(param) + "'", 1)
+  return command + "\n"
+
+ 
 if __name__ == "__main__":
+   verbose = 0
    main(sys.argv[1:])
