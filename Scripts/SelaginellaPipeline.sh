@@ -1,6 +1,9 @@
 MAXCLUST=30466
 BASEDIR=/Users/HeathOBrien/Bioinformatics/Selaginella_DGE
 
+######################################### TRIM AND FILTER READS #####################################
+bash $BASEDIR/Scripts/TrimReads.sh
+
 #initialise database with species info
 mysql -u root -e "CREATE DATABASE IF NOT EXISTS 'SelaginellaGenomics'"
 mysql -u root SelaginellaGenomics < $BASEDIR/Scripts/InitializeSelaginellaGenomics.sql
@@ -158,13 +161,8 @@ echo "ortholog_overlap.png: venn diagram of ortholog group overlaps" >> $BASEDIR
 for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
 do
   $BASEDIR/Scripts/GetData.py -f count_totals -s $species > $BASEDIR/Corset/${species}count_totals.txt
-  $BASEDIR/Scripts/FilterCounts.py --in $BASEDIR/Corset/${species}count_totals.txt --min 30 >$BASEDIR/DGEclust/${species}counts.txt
-  if test $species = 'MOEL'
-  then
-    clust -t 10000 -dt 10 -g [0,1,2] -o $BASEDIR/DGEclust/$species $BASEDIR/DGEclust/${species}counts.txt  
-  else
-    clust -t 10000 -dt 10 -g [0,1,2,3] -o $BASEDIR/DGEclust/$species $BASEDIR/DGEclust/${species}counts.txt
-  fi
+  #$BASEDIR/Scripts/FilterCounts.py --in $BASEDIR/Corset/${species}count_totals.txt --min 30 >$BASEDIR/DGEclust/${species}counts.txt
+  $BASEDIR/Scripts/RunDGEclust.py  $BASEDIR/Corset/${species}count_totals.txt
   for leaf1 in `seq 0 2`
   do
     for leaf2 in `seq $(($leaf1+1)) 3`
