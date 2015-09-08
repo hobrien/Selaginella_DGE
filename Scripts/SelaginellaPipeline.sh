@@ -160,16 +160,16 @@ echo "ortholog_overlap.png: venn diagram of ortholog group overlaps" >> $BASEDIR
 ############################## DIFFERENTIAL EXPRESSION ANALYSES ###########################
 for species in 'KRAUS' 'MOEL' 'UNC' 'WILD'
 do
-  $BASEDIR/Scripts/GetData.py -f count_totals -s $species > $BASEDIR/Corset/${species}count_totals.txt
-  #$BASEDIR/Scripts/FilterCounts.py --in $BASEDIR/Corset/${species}count_totals.txt --min 30 >$BASEDIR/DGEclust/${species}counts.txt
-  $BASEDIR/Scripts/RunDGEclust.py  $BASEDIR/Corset/${species}count_totals.txt
+  $BASEDIR/Scripts/GetData.py -f count_totals -s $species > $BASEDIR/Corset/${species}counts.txt
+  $BASEDIR/Scripts/FilterCounts.py --in $BASEDIR/Corset/${species}counts.txt --perc 40 --out $BASEDIR/Corset/${species}counts_filtered.txt
+  $BASEDIR/Scripts/RunDGEclust.py  $BASEDIR/Corset/${species}counts_filtered.txt
   for leaf1 in `seq 0 2`
   do
     for leaf2 in `seq $(($leaf1+1)) 3`
     do
       if ! test $species = 'MOEL' || ! test $leaf2 = 3
       then
-        python $BASEDIR/Scripts/GetDGEclustPvals.py $BASEDIR/Corset/KRAUScount_totals.txt ${species}${leaf1} ${species}${leaf2}
+        python $BASEDIR/Scripts/GetDGEclustPvals.py $BASEDIR/Corset/${species}counts_filtered.txt ${species}${leaf1} ${species}${leaf2}
         python $BASEDIR/Scripts/AddData.py -f dep -i $BASEDIR/DGEclust/${species}${leaf1}${leaf2}.txt -n ${species}
         Rscript $BASEDIR/Scripts/DESeq2_v_DGEClust.R $BASEDIR/DGEclust/${species}_$(($leaf1+1))$(($leaf2+1)).txt $BASEDIR/DGEclust/${species}counts.txt 0.01
         python $BASEDIR/Scripts/AddData.py -f de -n ${species} -i $BASEDIR/DGEclust/${species}_$(($leaf1+1))$(($leaf2+1))_0.01_overlap2.txt

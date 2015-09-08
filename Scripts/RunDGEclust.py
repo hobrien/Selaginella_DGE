@@ -15,12 +15,9 @@ else:
     group_names = ["%s%i" % t for t in zip([species] * 4, range(1,5))]
     
 counts = pd.read_table(table)
-row_sums = counts.sum(1)
-idxs = row_sums > np.percentile(row_sums, 40)   # identifies the upper 60% of the data
-counts_filt = counts[idxs]  
 
 mgr = SimulationManager()
-data = CountData(counts_filt, groups=group_names)
+data = CountData(counts, groups=group_names)
 mdl = NBinomModel(data, outdir=species + '_DGEclust')
 
 mgr.new(data, mdl)
