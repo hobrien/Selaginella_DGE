@@ -73,6 +73,8 @@ def main(argv):
       corset_nr(cur, name)
     if function == 'de':
       differential_expression(cur, infilename, name)
+    if function == 'dep':
+      de_pvalues(cur, infilename, name)
     if function == 'ath':
       add_Ath(cur, infilename)
 
@@ -86,6 +88,16 @@ def PrintCommand(command, options=()):
   for param in options:
     command =command.replace("%s", "'" + param + "'", 1)
   return command + "\n"
+  
+def ExecuteCommand(cur, command, options=()):
+    if verbose:
+        sys.stderr.write(PrintCommand(command, options))
+    try:
+        cur.execute(command, options)
+    except mdb.IntegrityError, e:
+        warnings.warn("%s" % e)
+        pass
+  
 
 def add_Ath(cur, infilename):
   with open(infilename, 'rU') as f:
@@ -105,13 +117,23 @@ def add_Ath(cur, infilename):
          continue
       command = "INSERT INTO AthHomologs(seqID, athID, percen_identity, homology_type) VALUES(%s, %s, %s, %s)"
       options = (EnsemblTranscriptID, AthEnsemblGeneID, PercIdentity, HomologyType)
-      if verbose:
-         sys.stderr.write(PrintCommand(command, options))
+      ExecuteCommand(cur, command, options)
+
+def de_pvalues(cur, infilename, name):
+  command = "INSERT INTO Expression(clusterID, SpeciesID, sample1, sample2, Posteriors, FDR) VALUES(%s, %s, %s, %s, %s, %s)"
+  with open(infilename, 'rU') as f:
+    reader=csv.reader(f,delimiter='\t')
+    headers = reader.next()
+    basename = path.splitext(path.basename(infilename))[0]
+    sample1 = basename[:-1]
+    sample2 = sample1[:-1] + basename[-1]
+    for row in reader:
       try:
-        cur.execute(command, options)
-      except mdb.IntegrityError, e:
-        warnings.warn("%s" % e)
-        pass
+        (clusterID, Posteriors, FDR) = row
+      except ValueError:
+        continue
+      options = (clusterID, sample1[:-1], sample1, sample2, Posteriors, FDR)
+      ExecuteCommand(cur, command, options)
 
 def differential_expression(cur, infilename, name):
   with open(infilename, 'rU') as f:
