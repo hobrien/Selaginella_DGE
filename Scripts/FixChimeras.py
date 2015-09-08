@@ -17,13 +17,16 @@ import MySQLdb as mdb
 
 
 def main(argv):
-  usage = 'FixChimeras -d database_name -o overlap_cutoff [-s <species>|-c <contigID>] [-v]'
   species = ''
   contig = ''
   database = 'SelaginellaGenomics'
   overlap = .1
+  evalue = 1e-10
+  usage = """FixChimeras -e Evalue_cutoff -d database_name -o overlap_cutoff [-s <species>|-c <contigID>] [-v]
+  
+             Defaults: FixChimeras -e %s -d SelaginellaGenomics -o %s""" % (str(evalue), str(overlap))
   try:
-     opts, args = getopt.getopt(argv,"hvs:o:c:",["help", "verbose", "species=", "database=", "overlap=", "contig="])
+     opts, args = getopt.getopt(argv,"hvs:o:c:e:",["help", "verbose", "species=", "database=", "overlap=", "contig=", "evalue="])
   except getopt.GetoptError:
      print usage
      sys.exit(2)
@@ -37,8 +40,10 @@ def main(argv):
         contig = arg
      elif opt in ("-d", "--database"):
         database = arg
-     elif opt in ("-overlap", "--overlap"):
+     elif opt in ("-o", "--overlap"):
         overlap = float(arg)
+     elif opt in ("-e", "--evalue"):
+        evalue = float(arg)
      elif opt in ("-v", "--verbose"):
         global verbose
         verbose = 1
@@ -74,9 +79,8 @@ def main(argv):
     cur.execute(command, options)
     for row in cur.fetchall():
         seqID = row[0]
-        Intervals = GetIntervals(seqID, overlap, cur)
+        Intervals = GetIntervals(seqID, overlap, evalue, cur)
         OldCoding = GetCoding(seqID, cur)
-        
         for new_coding in UpdateCoding(Intervals, OldCoding, overlap):
             command = """INSERT INTO CodingSequences(geneID, seqID, species, start_pos, end_pos, strand, start_codon, 
                          stop_codon, notes) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s);"""
@@ -202,11 +206,11 @@ def GetCoding(qseqid, cur):
     coding_sequences.sort(key=lambda k: int(k['start_pos']))
     return coding_sequences
     
-def GetIntervals(qseqid, max_overlap, cur):
+def GetIntervals(qseqid, max_overlap, evalue, cur):
     col_names = 'qseqid sseqid qstart qend sstart send'
     intervals = []
-    command = "SELECT DISTINCT sseqid FROM BlastX WHERE qseqid = %s ORDER BY evalue"
-    options = (qseqid)
+    command = "SELECT DISTINCT sseqid FROM BlastX WHERE qseqid = %s AND evalue < %s ORDER BY evalue"
+    options = (qseqid, evalue)
     if verbose:
        sys.stderr.write(PrintCommand(command, options))
     cur.execute(command, options)
