@@ -136,20 +136,20 @@ def de_pvalues(cur, infilename, name):
       ExecuteCommand(cur, command, options)
 
 def differential_expression(cur, infilename, name):
+  command = "UPDATE Expression SET sample1Expr = %s, sample2Expr = %s, avgLogExpr = %s, rLogFC = %s WHERE clusterID = %s AND sample1 = %s AND sample2 = %s"
   with open(infilename, 'rU') as f:
-    reader=csv.reader(f,delimiter=' ')
+    reader=csv.reader(f,delimiter='\t')
     headers = reader.next()
-    (sample1, sample2) = headers[0:2]
+    basename = path.splitext(path.basename(infilename))[0]
+    sample1 = basename[:-1]
+    sample2 = sample1[:-1] + basename[-1]
     for row in reader:
       try:
-        (clusterID, sample1expr, sample2expr, avgLogExpr, rLogFC, DGEclust_padj) = row
+        (clusterID, sample1_expression, sample2_expression, avgLogExpr, rLogFC) = row
       except ValueError:
         continue
-      try:
-        cur.execute("INSERT INTO DEclusters(clusterID, SpeciesID, sample1, sample2, sample1expr, sample2expr, avgLogExpr, rLogFC, DGEclust_padj) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)", (clusterID, name, sample1, sample2, sample1expr, sample2expr, avgLogExpr, rLogFC, DGEclust_padj))
-      except mdb.IntegrityError, e:
-        warnings.warn("%s" % e)
-        pass
+      options = (sample1_expression, sample2_expression, avgLogExpr, rLogFC, clusterID, sample1, sample2)
+      ExecuteCommand(cur, command, options)
 
 def corset_nr(cur, speciesID):
     print "SELECT CorsetGroups.seqID, Max(Blast.hitlen) FROM Blast, CorsetGroups, CodingSequences WHERE CorsetGroups.seqID = CodingSequences.seqID AND CodingSequences.geneID = Blast.qseqid AND Blast.qseqid != Blast.sseqid AND CorsetGroups.speciesID = %s GROUP BY CorsetGroups.clusterID" % speciesID

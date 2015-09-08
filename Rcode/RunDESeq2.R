@@ -18,4 +18,5 @@ results <- data.frame(
     assay(rld), 
     avgLogExpr = ( assay(rld)[,2] + assay(rld)[,1] ) / 2,
     rLogFC = assay(rld)[,2] - assay(rld)[,1] )
-write.table(results, textfile)
+results$Cluster <- row.names(results)
+write.table(results[,c(5,1,2,3,4)], textfile, row.names=FALSE, sep="\t")
