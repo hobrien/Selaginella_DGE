@@ -33,7 +33,9 @@ fte_theme <- function() {
         # Format the legend, but hide by default
         theme(legend.position="none") +
         theme(legend.background = element_rect(fill=color.background)) +
-        theme(legend.text = element_text(size=7,color=color.axis.title)) +
+        theme(legend.key = element_rect(fill=color.background, colour=color.background)) +
+        theme(legend.text = element_text(size=9,color=color.axis.title)) +
+        theme(legend.title = element_blank()) +
         
         # Set title and axis labels, and format these and tick marks
         theme(plot.title=element_text(color=color.title, size=10, vjust=1.25)) +
@@ -80,6 +82,10 @@ results <- data.frame(
     avgLogExpr = ( assay(rld)[,2] + assay(rld)[,1] ) / 2,
     rLogFC = assay(rld)[,2] - assay(rld)[,1] )
 DGEclust<-read.table(file=DGEclust_file, header=T)
+if (nrow(DGEclust[DGEclust$padj == 0, ]["padj"]) > 0 ) {
+    DGEclust[DGEclust$padj == 0, ]["padj"] <- 1e-5
+}
+
 results$"DGEclust_padj"<-DGEclust[,"padj"][match(row.names(results), row.names(DGEclust))]
 
 write.table(results[results$DGEclust_padj < DGEclust_cutoff & abs(results$rLogFC)>1, ], textfile)
