@@ -177,7 +177,7 @@ do
     done
   done
 done
-Rscript $BASEDIR/Scripts/VolcanoPlot.R $BASEDIR/Figures/Volcano.png
+Rscript $BASEDIR/Scripts/RunVolcanoPlot.R $BASEDIR/Figures/Volcano.png
 
 ############################# MAKE LIST OF CHIMERIC DE GENES ###############################
 

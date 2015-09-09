@@ -10,8 +10,8 @@ source("~/Documents/BTsync2/R/FormatGGplot.R")
 
 Volcanoplot <- function(species, sample1, sample2) {
   con<-dbConnect(RMySQL::MySQL(), user='root', password='', host='localhost', dbname='SelaginellaGenomics')
-  Expression <- dbReadTable(conn = con,name = 'Expression')
-  #Expression <- dbGetQuery(conn = con, statement = "SELECT * FROM Expression WHERE sample1 = 'KRAUS1' AND sample2 = 'KRAUS2'")
+  #Expression <- dbReadTable(conn = con,name = 'Expression')
+  Expression <- dbGetQuery(conn = con, statement = "SELECT * FROM Expression WHERE sample1 = 'KRAUS1' AND sample2 = 'KRAUS2'")
   DEgenes <- dbGetQuery(conn = con, statement = "SELECT * FROM Expression WHERE (rLogFC > 1 OR rLogFC < -1) AND FDR < 0.01")
 
 #need a couple of the formatting elements to draw lines
@@ -38,8 +38,3 @@ Volcanoplot <- function(species, sample1, sample2) {
     guides(colour = guide_legend(override.aes = list(size=3)))
   plot
 }
-args <- commandArgs(trailingOnly = TRUE)
-plotfile <- args[1]
-png(plotfile, bg='transparent', res = 300, width=15, height=15, units='cm')
-print(Volcanoplot(ALL))
-dev.off()
