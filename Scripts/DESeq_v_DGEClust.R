@@ -42,13 +42,13 @@ scatterplot<-function(pvalues, DEseq_cutoff, DGEclust_cutoff, name) {
 }
 vennplot <-function(pvalues, DEseq_cutoff, DGEclust_cutoff) {
   if ( nrow(pvalues[pvalues$DGEclust_padj < DGEclust_cutoff, ]) > 0 && nrow(pvalues[pvalues$DEseq_padj < DEseq_cutoff, ]) > 0 ) {
-    if ( nrow(pvalues[pvalues$DGEclust_padj < DGEclust_cutoff, ]) < nrow(pvalues[pvalues$DEseq_padj < DEseq_cutoff, ]) ) {
+    if ( nrow(pvalues[pvalues$DGEclust_padj < DGEclust_cutoff, ]) > nrow(pvalues[pvalues$DEseq_padj < DEseq_cutoff, ]) ) {
       draw.pairwise.venn(area1=nrow(pvalues[results$DGEclust_padj < DGEclust_cutoff, ]), 
                          area2=nrow(pvalues[pvalues$DEseq_padj < DEseq_cutoff, ]), 
                          cross.area=nrow(pvalues[pvalues$DEseq_padj < DEseq_cutoff & pvalues$DGEclust_padj < DGEclust_cutoff, ]), 
                          fill=c('blue', 'red'), 
                          cat.col = c('blue', 'red'),
-                         category=c("DEseq", "DGEclust"), 
+                         category=c("DGEclust", "DEseq"), 
                          lty = 'blank',
                          cex = 2,
                          cat.cex = 1.75,
@@ -57,12 +57,12 @@ vennplot <-function(pvalues, DEseq_cutoff, DGEclust_cutoff) {
                          cat.fontfamily='sans')
     }
     else {
-      draw.pairwise.venn(area1=nrow(pvalues[pvalues$DGEclust_padj < DGEclust_cutoff, ]),
-                         area2=nrow(pvalues[pvalues$DEseq_padj < DEseq_cutoff, ]), 
+      draw.pairwise.venn(area1=nrow(pvalues[pvalues$DEseq_padj < DEseq_cutoff, ]),
+                         area2=nrow(pvalues[pvalues$DGEclust_padj < DGEclust_cutoff, ]), 
                          cross.area=nrow(pvalues[pvalues$DEseq_padj < DEseq_cutoff & pvalues$DGEclust_padj < DGEclust_cutoff, ]), 
                          fill=c('red', 'blue'), 
                          cat.col = c('red', 'blue'),
-                         category=c("DGEclust", "DEseq"), 
+                         category=c("DEseq", "DGEclust"), 
                          lty = 'blank',
                          cex = 2,
                          cat.cex = 1.75,
@@ -73,8 +73,8 @@ vennplot <-function(pvalues, DEseq_cutoff, DGEclust_cutoff) {
   }
   else if (nrow(pvalues[pvalues$DGEclust_padj < DGEclust_cutoff, ]) > 0) {
     draw.single.venn(area=nrow(pvalues[pvalues$DGEclust_padj < DGEclust_cutoff, ]), 
-                     fill=c('red'), 
-                     cat.col = c('red'),
+                     fill=c('blue'), 
+                     cat.col = c('blue'),
                      category=c("DGEclust"), 
                      lty = 'blank',
                      cex = 2,
@@ -85,8 +85,8 @@ vennplot <-function(pvalues, DEseq_cutoff, DGEclust_cutoff) {
   }
   else if (nrow(pvalues[pvalues$DEseq_padj < DEseq_cutoff, ]) > 0) {
     draw.single.venn(area=nrow(pvalues[pvalues$DEseq_padj < DEseq_cutoff, ]), 
-                     fill=c('blue'), 
-                     cat.col = c('blue'),
+                     fill=c('red'), 
+                     cat.col = c('red'),
                      category=c("DEseq"), 
                      lty = 'blank',
                      cex = 2,
