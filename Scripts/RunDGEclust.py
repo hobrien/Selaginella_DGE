@@ -13,8 +13,7 @@ if species == 'MOEL':
     group_names = ["%s%i" % t for t in zip([species] * 3, range(1,4))]
 else:
     group_names = ["%s%i" % t for t in zip([species] * 4, range(1,5))]
-    
-counts = pd.read_table(table)
+counts = pd.read_table(table, index_col=0)
 
 mgr = SimulationManager()
 data = CountData(counts, groups=group_names)
